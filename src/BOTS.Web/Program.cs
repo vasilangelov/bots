@@ -1,20 +1,15 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 using BOTS.Data;
 using BOTS.Data.Models;
+using BOTS.Web.BackgroundServices;
+using BOTS.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure services...
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
-builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
-{
-    // TODO: setup user settings...
-}).AddEntityFrameworkStores<ApplicationDbContext>();
-
 var mvcBuilder = builder.Services.AddControllersWithViews();
 mvcBuilder.Services.AddRazorPages();
 
@@ -25,7 +20,31 @@ if (builder.Environment.IsDevelopment())
     mvcBuilder.AddRazorRuntimeCompilation();
 }
 
-// Configure...
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
+{
+    // TODO: setup user settings...
+}).AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.Configure<JsonSerializerOptions>(options =>
+{
+    options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+});
+builder.Services.Configure<CurrencyProviderOptions>(builder.Configuration.GetSection("CurrencyProviderOptions"));
+
+// TODO: extract name constants...
+builder.Services.AddHttpClient("CurrencyApi", options =>
+ {
+     options.BaseAddress = new Uri("https://api.exchangerate.host/latest");
+ });
+builder.Services.AddSingleton<ICurrencyProviderService, CurrencyProviderService>();
+builder.Services.AddHostedService<CurrencyHostedService>();
+
+// Configure pipeline...
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

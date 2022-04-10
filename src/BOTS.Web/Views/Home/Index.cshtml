@@ -1,4 +1,6 @@
-﻿@{
+﻿@model BOTS.Services.Models.CurrencyInfo
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
@@ -6,3 +8,16 @@
     <h1 class="display-4">Welcome</h1>
     <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
 </div>
+
+<h2>Currency values</h2>
+<dl>
+    @foreach (var currencyRate in Model.Rates)
+    {
+        <dt>
+            @Model.Base to @currencyRate.Key
+        </dt>
+        <dd>
+            @currencyRate.Value
+        </dd>
+    }
+</dl>
