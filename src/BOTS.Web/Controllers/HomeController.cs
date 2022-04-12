@@ -1,28 +1,13 @@
 ﻿namespace BOTS.Web.Controllers
 {
-    using System.Diagnostics;
     using Microsoft.AspNetCore.Mvc;
+    using System.Diagnostics;
 
-    using BOTS.Services;
     using Models;
 
     public class HomeController : Controller
     {
-        private readonly ICurrencyProviderService currencyProviderService;
-
-        public HomeController(ICurrencyProviderService currencyProviderService)
-        {
-            this.currencyProviderService = currencyProviderService;
-        }
-
         public IActionResult Index()
-        {
-            var model = this.currencyProviderService.GetCurrencyInfo();
-
-            return this.View(model);
-        }
-
-        public IActionResult Privacy()
         {
             return this.View();
         }

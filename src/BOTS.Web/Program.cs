@@ -26,7 +26,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
-    // TODO: setup user settings...
+    options.User.RequireUniqueEmail = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+
 }).AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.Configure<JsonSerializerOptions>(options =>
@@ -35,6 +39,7 @@ builder.Services.Configure<JsonSerializerOptions>(options =>
     options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
 });
 builder.Services.Configure<CurrencyProviderOptions>(builder.Configuration.GetSection("CurrencyProviderOptions"));
+builder.Services.Configure<ApplicationUserOptions>(builder.Configuration.GetSection("ApplicationUserOptions"));
 
 // TODO: extract name constants...
 builder.Services.AddHttpClient("CurrencyApi", options =>
