@@ -7,5 +7,9 @@
     {
         [Column(TypeName = "money")]
         public decimal Balance { get; set; }
+
+        public int NationalityId { get; set; }
+
+        public virtual Nationality Nationality { get; set; } = default!;
     }
 }

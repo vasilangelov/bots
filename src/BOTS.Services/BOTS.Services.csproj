@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BOTS.Data\BOTS.Data.csproj" />
     <ProjectReference Include="..\BOTS.Services.Models\BOTS.Services.Models.csproj" />
   </ItemGroup>
 

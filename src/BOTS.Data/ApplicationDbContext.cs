@@ -7,6 +7,8 @@
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+        public DbSet<Nationality> Nationalities { get; set; } = default!;
+
         public ApplicationDbContext(DbContextOptions options)
             : base(options)
         {

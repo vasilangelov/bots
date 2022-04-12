@@ -26,6 +26,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly IRepository<Nationality> _nationalityRepository;
         private readonly ApplicationUserOptions _applicationUserOptions;
 
         public RegisterModel(
@@ -34,7 +35,8 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
-            IOptions<ApplicationUserOptions> applicationUserOptions)
+            IOptions<ApplicationUserOptions> applicationUserOptions,
+            IRepository<Nationality> nationalityRepository)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -42,8 +44,11 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _nationalityRepository = nationalityRepository;
             _applicationUserOptions = applicationUserOptions.Value;
         }
+
+        public IEnumerable<Nationality> Nationalities { get; set; }
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -103,11 +108,16 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+            [Required]
+            [Display(Name = "Nationality")]
+            public int NationalityId { get; set; }
         }
 
 
         public async Task OnGetAsync(string returnUrl = null)
         {
+            Nationalities = this._nationalityRepository.AllAsNotracking().ToArray();
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
@@ -118,7 +128,19 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
+                bool isValidNationality = _nationalityRepository.AllAsNotracking().Any(x => x.Id == Input.NationalityId);
+
+                if (!isValidNationality)
+                {
+                    ModelState.AddModelError(string.Empty, "Invalid nationality");
+
+                    return Page();
+                }
+
                 var user = CreateUser();
+
+                user.Balance = _applicationUserOptions.InitialBalance;
+                user.NationalityId = Input.NationalityId;
 
                 await _userStore.SetUserNameAsync(user, Input.Username, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
@@ -165,7 +187,6 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             try
             {
                 var user = Activator.CreateInstance<ApplicationUser>();
-                user.Balance = _applicationUserOptions.InitialBalance;
 
                 return user;
             }

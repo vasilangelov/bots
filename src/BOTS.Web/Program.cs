@@ -6,6 +6,7 @@ using BOTS.Data;
 using BOTS.Data.Models;
 using BOTS.Web.BackgroundServices;
 using BOTS.Services;
+using BOTS.Data.Seeding;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,9 +50,24 @@ builder.Services.AddHttpClient("CurrencyApi", options =>
  });
 builder.Services.AddSingleton<ICurrencyProviderService, CurrencyProviderService>();
 builder.Services.AddHostedService<CurrencyHostedService>();
+builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 
 // Configure pipeline...
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
+
+    if (dbContext is not null)
+    {
+        await dbContext.Database.MigrateAsync();
+
+        await ApplicationDbContextSeeder.SeedAsync(dbContext);
+
+        await dbContext.SaveChangesAsync();
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {
