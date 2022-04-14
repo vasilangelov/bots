@@ -4,14 +4,18 @@
     {
         public static async Task SeedAsync(ApplicationDbContext dbContext)
         {
-            ISeeder[] seeders = new ISeeder[]
+            var seeders = new ISeeder[]
             {
                 new NationalitySeeder(),
+                new CurrencySeeder(),
+                new CurrencyPairSeeder(),
             };
 
             foreach (var seeder in seeders)
             {
                 await seeder.SeedAsync(dbContext);
+
+                await dbContext.SaveChangesAsync();
             }
         }
     }

@@ -1,57 +1,77 @@
 ﻿namespace BOTS.Services
 {
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Options;
     using System.Net.Http.Json;
     using System.Text.Json;
 
-    using Models;
+    using BOTS.Data.Models;
+    using BOTS.Services.Models;
 
     public class CurrencyProviderService : ICurrencyProviderService
     {
         private const decimal precision = 1000000;
-        private const int maxDeltaOffset = 11;
+        private const int maxDeltaOffset = 10;
 
-        private readonly CurrencyProviderOptions options;
         private readonly string queryParams;
         private readonly JsonSerializerOptions jsonOptions;
         private readonly IHttpClientFactory httpClientFactory;
-        private CurrencyInfo? instance;
 
-        public CurrencyProviderService(IOptions<CurrencyProviderOptions> options, IOptions<JsonSerializerOptions> jsonOptions, IHttpClientFactory httpClientFactory)
+        private CurrencyInfo? currencyInfo;
+
+        public CurrencyProviderService(IOptions<JsonSerializerOptions> jsonOptions, IHttpClientFactory httpClientFactory, IServiceProvider serviceProvider)
         {
-            this.options = options.Value;
             this.jsonOptions = jsonOptions.Value;
             this.httpClientFactory = httpClientFactory;
 
-            string currencies = string.Join(",",
-                                    Enum.GetValues<Currency>()
-                                        .Where(c => c != this.options.Base)
-                                        .ToArray());
+            using (var scope = serviceProvider.CreateScope())
+            {
+                var currencyRepository = scope.ServiceProvider.GetRequiredService<IRepository<CurrencyPair>>();
 
-            this.queryParams = $"?base={this.options.Base}&symbols={currencies}&places=6";
+                IEnumerable<string> currencies = currencyRepository
+                                                    .AllAsNotracking()
+                                                    .Where(x => x.Display)
+                                                    .Select(x => x.Left.Name)
+                                                    .Concat(currencyRepository
+                                                        .AllAsNotracking()
+                                                        .Where(x => x.Display)
+                                                        .Select(x => x.Right.Name))
+                                                    .Distinct()
+                                                    .Where(x => x != "USD")
+                                                    .ToArray();
+
+                this.queryParams = $"?base=USD&symbols={string.Join(",", currencies)}&places=10";
+            }
         }
 
-        public CurrencyInfo? GetCurrencyInfo()
-            => this.instance;
-
-        public async Task UpdateCurrencyInfoAsync(CancellationToken cancellationToken)
+        public CurrencyInfo GetCurrencyInfo()
         {
-            if (this.instance == default)
+            if (this.currencyInfo == null)
             {
-                using var client = this.httpClientFactory.CreateClient("CurrencyApi");
+                throw new Exception("Currency info could not be obtained");
+            }
 
-                this.instance = await client.GetFromJsonAsync<CurrencyInfo>(queryParams, this.jsonOptions, cancellationToken);
+            return this.currencyInfo;
+        }
+
+        public async Task UpdateCurrencyInfoAsync(CancellationToken cancellationToken = default)
+        {
+            if (this.currencyInfo == default)
+            {
+                using var httpClient = this.httpClientFactory.CreateClient("CurrencyApi");
+
+                this.currencyInfo = await httpClient.GetFromJsonAsync<CurrencyInfo>(this.queryParams, this.jsonOptions, cancellationToken);
             }
             else
             {
                 Random rnd = new();
 
-                foreach (var currency in this.instance.Rates.Keys)
+                foreach (var currency in this.currencyInfo.Rates.Keys)
                 {
                     int sign = rnd.Next(-1, 2);
                     decimal delta = rnd.Next(maxDeltaOffset) / precision;
 
-                    this.instance.Rates[currency] += sign * delta;
+                    this.currencyInfo.Rates[currency] += sign * delta;
                 }
             }
         }

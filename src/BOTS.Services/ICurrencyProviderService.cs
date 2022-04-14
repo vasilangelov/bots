@@ -1,11 +1,11 @@
 ﻿namespace BOTS.Services
 {
-    using Models;
+    using BOTS.Services.Models;
 
     public interface ICurrencyProviderService
     {
-        CurrencyInfo? GetCurrencyInfo();
+        CurrencyInfo GetCurrencyInfo();
 
-        Task UpdateCurrencyInfoAsync(CancellationToken cancellationToken);
+        Task UpdateCurrencyInfoAsync(CancellationToken cancellationToken = default);
     }
 }

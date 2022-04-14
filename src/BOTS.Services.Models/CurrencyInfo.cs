@@ -2,8 +2,8 @@
 {
     public class CurrencyInfo
     {
-        public Currency Base { get; set; }
+        public string Base { get; set; }
 
-        public Dictionary<Currency, decimal> Rates { get; set; } = default!;
+        public Dictionary<string, decimal> Rates { get; set; } = default!;
     }
 }

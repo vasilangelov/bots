@@ -38,9 +38,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 builder.Services.Configure<JsonSerializerOptions>(options =>
 {
     options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
 });
-builder.Services.Configure<CurrencyProviderOptions>(builder.Configuration.GetSection("CurrencyProviderOptions"));
 builder.Services.Configure<ApplicationUserOptions>(builder.Configuration.GetSection("ApplicationUserOptions"));
 
 // TODO: extract name constants...
@@ -57,16 +55,11 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-    if (dbContext is not null)
-    {
-        await dbContext.Database.MigrateAsync();
+    await dbContext.Database.MigrateAsync();
 
-        await ApplicationDbContextSeeder.SeedAsync(dbContext);
-
-        await dbContext.SaveChangesAsync();
-    }
+    await ApplicationDbContextSeeder.SeedAsync(dbContext);
 }
 
 if (app.Environment.IsDevelopment())
