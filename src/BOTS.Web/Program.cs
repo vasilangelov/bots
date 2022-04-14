@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 using BOTS.Data;
@@ -7,6 +6,7 @@ using BOTS.Data.Models;
 using BOTS.Web.BackgroundServices;
 using BOTS.Services;
 using BOTS.Data.Seeding;
+using BOTS.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +34,8 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     options.Password.RequireLowercase = false;
 
 }).AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddSignalR();
 
 builder.Services.Configure<JsonSerializerOptions>(options =>
 {
@@ -85,6 +87,7 @@ app.UseEndpoints(app =>
 {
     app.MapDefaultControllerRoute();
     app.MapRazorPages();
+    app.MapHub<CurrencyHub>("/Currencies/Live");
 });
 
 app.Run();

@@ -1,0 +1,11 @@
+﻿@using BOTS.Data.Models
+@using Microsoft.AspNetCore.Identity
+
+@inject SignInManager<ApplicationUser> SignInManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-area="" asp-controller="Trades" asp-action="Live">Live Trades</a>
+    </li>
+}

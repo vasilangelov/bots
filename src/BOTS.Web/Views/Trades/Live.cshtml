@@ -1,0 +1,38 @@
+﻿@model LiveViewModel
+
+@{
+    ViewData["Title"] = "Live Trades";
+}
+
+<h1 class="text-center">Live trading</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8">
+        </div>
+        <div class="col-lg-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-6 text-center">
+                        <h5>Currency pair</h5>
+                        <select id="currencyPair" class="form-select">
+                            @foreach (var currencyPair in Model.CurrencyPairs)
+                            {
+                                <option data-left="@currencyPair.LeftName" data-right="@currencyPair.RightName">@currencyPair.LeftName/@currencyPair.RightName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-6 text-center">
+                        <h5>Currency rate: </h5>
+                        <p id="currencyRate" style="display: inline-block; width: fit-content; padding: 0.5rem; border-radius: .5rem;" class="bg-primary text-light mt-1">N/A</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="~/lib/signalr/dist/browser/signalr.min.js"></script>
+<script src="~/js/livetrades.js" asp-append-version="true"></script>
+}

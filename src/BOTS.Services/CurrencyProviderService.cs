@@ -37,21 +37,29 @@
                                                         .Where(x => x.Display)
                                                         .Select(x => x.Right.Name))
                                                     .Distinct()
-                                                    .Where(x => x != "USD")
                                                     .ToArray();
 
                 this.queryParams = $"?base=USD&symbols={string.Join(",", currencies)}&places=10";
             }
         }
 
-        public CurrencyInfo GetCurrencyInfo()
+        public decimal GetCurrencyRate(string left, string right)
         {
-            if (this.currencyInfo == null)
+            if (this.currencyInfo is null)
             {
-                throw new Exception("Currency info could not be obtained");
+                throw new InvalidOperationException("Could not obtain currency info");
             }
 
-            return this.currencyInfo;
+            decimal leftValue = this.currencyInfo.Rates[left];
+
+            if (this.currencyInfo.Base == right)
+            {
+                return 1 / leftValue;
+            }
+
+            decimal rightValue = this.currencyInfo.Rates[right];
+
+            return rightValue / leftValue;
         }
 
         public async Task UpdateCurrencyInfoAsync(CancellationToken cancellationToken = default)

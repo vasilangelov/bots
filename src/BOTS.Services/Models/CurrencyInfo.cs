@@ -2,7 +2,7 @@
 {
     using System.Text.Json.Serialization;
 
-    public class CurrencyInfo
+    internal class CurrencyInfo
     {
         public string Base { get; set; } = default!;
 
