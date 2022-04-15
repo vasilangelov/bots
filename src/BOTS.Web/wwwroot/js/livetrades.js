@@ -23,7 +23,7 @@ function removeCurrencySubscription() {
 }
 
 connection.on('CurrencyRateUpdate', (cr) => {
-    currencyRate.textContent = cr;
+    currencyRate.textContent = cr.toFixed(6);
 });
 
 connection.start().then(addCurrencySubscription);

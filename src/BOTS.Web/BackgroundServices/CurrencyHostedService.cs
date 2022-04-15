@@ -5,6 +5,7 @@
     using BOTS.Services;
     using BOTS.Web.Hubs;
     using BOTS.Data.Models;
+    using BOTS.Common;
 
     public class CurrencyHostedService : BackgroundService
     {
@@ -12,9 +13,11 @@
         private readonly IHubContext<CurrencyHub> currencyHub;
         private readonly IServiceProvider serviceProvider;
 
-        private IEnumerable<string> groupsAvailable = default!;
+        private IEnumerable<KeyValuePair<string, string>> groupsAvailable = default!;
 
-        public CurrencyHostedService(ICurrencyProviderService currencyProviderService, IHubContext<CurrencyHub> currencyHub, IServiceProvider serviceProvider)
+        public CurrencyHostedService(ICurrencyProviderService currencyProviderService,
+                                     IHubContext<CurrencyHub> currencyHub,
+                                     IServiceProvider serviceProvider)
         {
             this.currencyProviderService = currencyProviderService;
             this.currencyHub = currencyHub;
@@ -30,9 +33,13 @@
                 this.groupsAvailable = currencyPair
                                         .AllAsNotracking()
                                         .Where(x => x.Display)
-                                        // TODO: add specific format...
-                                        .Select(x => x.Left.Name + "/" + x.Right.Name)
+                                        .Select(x => new KeyValuePair<string, string>(x.Left.Name, x.Right.Name))
                                         .ToArray();
+            }
+
+            if (this.groupsAvailable is null)
+            {
+                throw new NullReferenceException("Available groups not found");
             }
 
             await base.StartAsync(cancellationToken);
@@ -46,16 +53,20 @@
 
                 foreach (var group in groupsAvailable)
                 {
-                    string[] currencies = group.Split("/");
+                    decimal currencyRate = this.currencyProviderService
+                                                    .GetCurrencyRate(group.Key, group.Value);
 
-                    decimal currencyRate = this.currencyProviderService.GetCurrencyRate(currencies[0], currencies[1]);
+                    string groupName = string.Format(GlobalConstants.CurrencyPairFormat,
+                                                     group.Key,
+                                                     group.Value);
 
-                    // TODO: if group does not exist???
-                    // TODO: Action constants...
-                    await this.currencyHub.Clients.Group(group).SendAsync("CurrencyRateUpdate", currencyRate, stoppingToken);
+                    await this.currencyHub
+                        .Clients
+                        .Group(groupName)
+                        .SendAsync("CurrencyRateUpdate", currencyRate, stoppingToken);
                 }
 
-                await Task.Delay(1000, stoppingToken);
+                await Task.Delay(GlobalConstants.CurrencyValueUpdateFrequency, stoppingToken);
             }
         }
     }

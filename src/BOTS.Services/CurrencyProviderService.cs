@@ -39,7 +39,7 @@
                                                     .Distinct()
                                                     .ToArray();
 
-                this.queryParams = $"?base=USD&symbols={string.Join(",", currencies)}&places=10";
+                this.queryParams = $"?base=USD&symbols={string.Join(",", currencies)}&places=6";
             }
         }
 

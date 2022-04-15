@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BOTS.Common\BOTS.Common.csproj" />
     <ProjectReference Include="..\BOTS.Data.Models\BOTS.Data.Models.csproj" />
     <ProjectReference Include="..\BOTS.Data\BOTS.Data.csproj" />
     <ProjectReference Include="..\BOTS.Services\BOTS.Services.csproj" />
