@@ -8,9 +8,9 @@
 
 <div class="container">
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-lg-6">
         </div>
-        <div class="col-lg-4">
+        <div class="col-lg-6">
             <div class="container">
                 <div class="row">
                     <div class="col-sm-6 text-center">
@@ -24,8 +24,55 @@
                     </div>
                     <div class="col-sm-6 text-center">
                         <h5>Currency rate: </h5>
-                        <p id="currencyRate" style="display: inline-block; width: fit-content; padding: 0.5rem; border-radius: .5rem;" class="bg-primary text-light mt-1">N/A</p>
+                        <p id="currencyRate" class="bg-gradient bg-primary text-light container-fluid rounded-2 p-2">N/A</p>
                     </div>
+                </div>
+                <div class="row text-center">
+                    <div class="col-sm-4">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr class="table-active">
+                                    <th colspan="2" class="text-center">Payout</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>$</td>
+                                    <td><input value="10" class="form-control text-right" /> </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-sm-4">
+                        <h5>Trading window</h5>
+                        <select class="form-select">
+                            <option>10 minutes</option>
+                            <option>30 minutes</option>
+                            <option>1 hour</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-4">
+                        <h5>Remaining time</h5>
+                        <p>0:00:00</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <table class="table table-active table-bordered text-center ">
+                        <thead>
+                            <tr>
+                                <th>Barrier</th>
+                                <th><img style="max-width: 3rem;" class="rounded d-block mx-auto" src="~/img/higher.svg" asp-append-version="true" alt="higher" /> Higher</th>
+                                <th><img style="max-width: 3rem;" class="rounded d-block mx-auto" src="~/img/lower.svg" asp-append-version="true" alt="lower" /> Lower</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th scope="row">79.429</th>
+                                <td><button class="btn btn-primary container-fluid">3.71</button></td>
+                                <td><button class="btn btn-danger container-fluid">7.60</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
