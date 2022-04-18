@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using BOTS.Data;
 using BOTS.Data.Models;
 using BOTS.Web.BackgroundServices;
+using BOTS.Web.Extensions;
 using BOTS.Services;
 using BOTS.Data.Seeding;
 using BOTS.Web.Hubs;
@@ -54,12 +55,11 @@ builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 
 // Configure pipeline...
 var app = builder.Build();
+await app.MigrateDatabaseAsync();
 
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-    await dbContext.Database.MigrateAsync();
 
     await ApplicationDbContextSeeder.SeedAsync(dbContext);
 }
