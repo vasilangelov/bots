@@ -15,6 +15,7 @@ using System.Text.Encodings.Web;
 
 using BOTS.Data.Models;
 using BOTS.Services;
+using BOTS.Services.Data.Common;
 
 namespace BOTS.Web.Areas.Identity.Pages.Account
 {

@@ -9,6 +9,7 @@
                 new NationalitySeeder(),
                 new CurrencySeeder(),
                 new CurrencyPairSeeder(),
+                new TradingWindowOptionSeeder(),
             };
 
             foreach (var seeder in seeders)

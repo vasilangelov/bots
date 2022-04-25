@@ -18,7 +18,7 @@
                         <select id="currencyPair" class="form-select">
                             @foreach (var currencyPair in Model.CurrencyPairs)
                             {
-                                <option data-left="@currencyPair.LeftName" data-right="@currencyPair.RightName">@currencyPair.LeftName/@currencyPair.RightName</option>
+                                <option value="@currencyPair.Id">@currencyPair.LeftName/@currencyPair.RightName</option>
                             }
                         </select>
                     </div>
@@ -38,22 +38,18 @@
                             <tbody>
                                 <tr>
                                     <td>$</td>
-                                    <td><input value="10" class="form-control text-right" /> </td>
+                                    <td><input id="payoutInput" value="10" class="form-control text-right" /></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                     <div class="col-sm-4">
                         <h5>Trading window</h5>
-                        <select class="form-select">
-                            <option>10 minutes</option>
-                            <option>30 minutes</option>
-                            <option>1 hour</option>
-                        </select>
+                        <select id="tradingWindows" class="form-select"></select>
                     </div>
                     <div class="col-sm-4">
                         <h5>Remaining time</h5>
-                        <p>0:00:00</p>
+                        <p id="timeRemaining"></p>
                     </div>
                 </div>
                 <div class="row">
@@ -65,13 +61,7 @@
                                 <th><img style="max-width: 3rem;" class="rounded d-block mx-auto" src="~/img/lower.svg" asp-append-version="true" alt="lower" /> Lower</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <th scope="row">79.429</th>
-                                <td><button class="btn btn-primary container-fluid">3.71</button></td>
-                                <td><button class="btn btn-danger container-fluid">7.60</button></td>
-                            </tr>
-                        </tbody>
+                        <tbody id="barrierContainer"></tbody>
                     </table>
                 </div>
             </div>

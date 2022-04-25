@@ -1,4 +1,4 @@
-﻿namespace BOTS.Services
+﻿namespace BOTS.Services.Data.Common
 {
     public interface IRepository<T>
         where T : class

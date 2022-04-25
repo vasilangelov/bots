@@ -1,4 +1,4 @@
-﻿namespace BOTS.Services
+﻿namespace BOTS.Services.Data.Common
 {
     using Microsoft.EntityFrameworkCore;
     using System.Linq;
@@ -10,28 +10,28 @@
         where T : class
     {
         private readonly ApplicationDbContext dbContext;
-        private readonly DbSet<T> set;
+        private readonly DbSet<T> dbSet;
 
         public Repository(ApplicationDbContext dbContext)
         {
             this.dbContext = dbContext;
-            this.set = this.dbContext.Set<T>();
+            this.dbSet = this.dbContext.Set<T>();
         }
 
         public IQueryable<T> All()
-            => this.set;
+            => this.dbSet;
 
         public IQueryable<T> AllAsNotracking()
-            => this.set.AsNoTracking();
+            => this.dbSet.AsNoTracking();
 
         public async Task AddAsync(T item)
-            => await this.set.AddAsync(item);
+            => await this.dbSet.AddAsync(item);
 
         public void Update(T item)
-            => this.set.Update(item);
+            => this.dbSet.Update(item);
 
         public void Remove(T item)
-            => this.set.Remove(item);
+            => this.dbSet.Remove(item);
 
         public async Task<int> SaveChangesAsync()
             => await this.dbContext.SaveChangesAsync();

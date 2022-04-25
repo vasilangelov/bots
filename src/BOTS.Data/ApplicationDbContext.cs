@@ -13,6 +13,10 @@
 
         public DbSet<CurrencyPair> CurrencyPairs { get; set; } = default!;
 
+        public DbSet<TradingWindow> TradingWindows { get; set; } = default!;
+
+        public DbSet<TradingWindowOption> TradingWindowOptions { get; set; } = default!;
+
         public ApplicationDbContext(DbContextOptions options)
             : base(options)
         {
@@ -20,8 +24,10 @@
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            builder.Entity<CurrencyPair>()
-                .HasKey(c => new { c.LeftId, c.RightId });
+            builder
+                .Entity<CurrencyPair>()
+                .HasIndex(x => new { x.LeftId, x.RightId })
+                .IsUnique();
 
             builder.Entity<CurrencyPair>()
                 .HasOne(x => x.Left)
@@ -32,6 +38,10 @@
                 .HasOne(x => x.Right)
                 .WithMany(x => x.RightPairs)
                 .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<TradingWindowOption>()
+                .Property(x => x.Duration)
+                .HasConversion<long>();
 
             base.OnModelCreating(builder);
         }

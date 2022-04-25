@@ -1,87 +1,150 @@
 ﻿namespace BOTS.Services
 {
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Options;
     using System.Net.Http.Json;
-    using System.Text.Json;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using System.Collections.Concurrent;
 
-    using BOTS.Data.Models;
+    using BOTS.Common;
     using BOTS.Services.Models;
 
     public class CurrencyProviderService : ICurrencyProviderService
     {
         private const decimal precision = 1000000;
-        private const int maxDeltaOffset = 10;
+        private const int maxDeltaOffset = 10000;
 
-        private readonly string queryParams;
-        private readonly JsonSerializerOptions jsonOptions;
+        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, decimal>> currencyCache = new();
+        private static readonly Random rnd = new();
+
         private readonly IHttpClientFactory httpClientFactory;
 
-        private CurrencyInfo? currencyInfo;
-
-        public CurrencyProviderService(IOptions<JsonSerializerOptions> jsonOptions, IHttpClientFactory httpClientFactory, IServiceProvider serviceProvider)
+        public CurrencyProviderService(IHttpClientFactory httpClientFactory)
         {
-            this.jsonOptions = jsonOptions.Value;
             this.httpClientFactory = httpClientFactory;
-
-            using (var scope = serviceProvider.CreateScope())
-            {
-                var currencyRepository = scope.ServiceProvider.GetRequiredService<IRepository<CurrencyPair>>();
-
-                IEnumerable<string> currencies = currencyRepository
-                                                    .AllAsNotracking()
-                                                    .Where(x => x.Display)
-                                                    .Select(x => x.Left.Name)
-                                                    .Concat(currencyRepository
-                                                        .AllAsNotracking()
-                                                        .Where(x => x.Display)
-                                                        .Select(x => x.Right.Name))
-                                                    .Distinct()
-                                                    .ToArray();
-
-                this.queryParams = $"?base=USD&symbols={string.Join(",", currencies)}&places=6";
-            }
         }
 
-        public decimal GetCurrencyRate(string left, string right)
+        public async Task<decimal> GetCurrencyRateAsync(string baseCurrency,
+                                                        string convertCurrency,
+                                                        CancellationToken cancellationToken = default)
         {
-            if (this.currencyInfo is null)
+            bool baseExists = currencyCache.TryGetValue(baseCurrency, out var convertRates);
+
+            if (!baseExists)
             {
-                throw new InvalidOperationException("Could not obtain currency info");
-            }
+                var rates = await this.FetchCurrencyRatesAsync(baseCurrency,
+                                                                new string[] { convertCurrency },
+                                                                cancellationToken);
 
-            decimal leftValue = this.currencyInfo.Rates[left];
+                convertRates = new ConcurrentDictionary<string, decimal>(rates);
 
-            if (this.currencyInfo.Base == right)
-            {
-                return 1 / leftValue;
-            }
+                bool success = currencyCache.TryAdd(baseCurrency, convertRates);
 
-            decimal rightValue = this.currencyInfo.Rates[right];
-
-            return rightValue / leftValue;
-        }
-
-        public async Task UpdateCurrencyInfoAsync(CancellationToken cancellationToken = default)
-        {
-            if (this.currencyInfo == default)
-            {
-                using var httpClient = this.httpClientFactory.CreateClient("CurrencyApi");
-
-                this.currencyInfo = await httpClient.GetFromJsonAsync<CurrencyInfo>(this.queryParams, this.jsonOptions, cancellationToken);
-            }
-            else
-            {
-                Random rnd = new();
-
-                foreach (var currency in this.currencyInfo.Rates.Keys)
+                if (!success)
                 {
-                    int sign = rnd.Next(-1, 2);
-                    decimal delta = rnd.Next(maxDeltaOffset) / precision;
+                    throw new Exception(string.Format("Could not set currency rate {0}/{1}",
+                                                      baseCurrency,
+                                                      convertCurrency));
+                }
 
-                    this.currencyInfo.Rates[currency] += sign * delta;
+                return rates[convertCurrency];
+            }
+
+            bool convertExists = convertRates!.TryGetValue(convertCurrency, out var rate);
+
+            if (!convertExists)
+            {
+                rate = await this.FetchCurrencyRateAsync(baseCurrency,
+                                                         convertCurrency,
+                                                         cancellationToken);
+
+                bool success = currencyCache[baseCurrency].TryAdd(convertCurrency, rate);
+
+                if (!success)
+                {
+                    throw new Exception(string.Format("Could not set currency rate {0}/{1}",
+                                                      baseCurrency,
+                                                      convertCurrency));
+                }
+
+                return rate;
+            }
+
+            return rate;
+        }
+
+        public async Task UpdateCurrencyRatesAsync(IDictionary<string, IEnumerable<string>> currencyPairs,
+                                                   CancellationToken cancellationToken = default)
+        {
+            foreach (var baseCurrency in currencyPairs.Keys)
+            {
+                if (!currencyCache.ContainsKey(baseCurrency))
+                {
+                    var convertRates = await this.FetchCurrencyRatesAsync(baseCurrency,
+                                                                          currencyPairs[baseCurrency],
+                                                                          cancellationToken);
+
+                    bool success = currencyCache.TryAdd(baseCurrency, new ConcurrentDictionary<string, decimal>(convertRates));
+                }
+
+                foreach (var convertCurrency in currencyPairs[baseCurrency])
+                {
+                    if (!currencyCache[baseCurrency].ContainsKey(convertCurrency))
+                    {
+                        decimal result = await this.FetchCurrencyRateAsync(baseCurrency, convertCurrency, cancellationToken);
+
+                        bool success = currencyCache[baseCurrency].TryAdd(convertCurrency, result);
+                    }
+
+                    currencyCache[baseCurrency][convertCurrency] = CalculateUpdatedCurrencyRate(currencyCache[baseCurrency][convertCurrency]);
                 }
             }
+        }
+
+        private async Task<decimal> FetchCurrencyRateAsync(string baseCurrency, string convertCurrency, CancellationToken cancellationToken = default)
+        {
+            var queryParams = string.Format("?base={0}&symbols={1}&places={2}", baseCurrency, convertCurrency, GlobalConstants.DecimalPlaces);
+
+            using var httpClient = this.httpClientFactory.CreateClient("CurrencyAPI");
+
+            var currencyInfo = await httpClient.GetFromJsonAsync<CurrencyInfo>(queryParams, cancellationToken);
+
+            if (currencyInfo == null)
+            {
+                throw new ArgumentException(string.Format("Could not retrieve {0} to {1} currency info",
+                                                        baseCurrency,
+                                                        convertCurrency));
+            }
+
+            return currencyInfo.Rates[convertCurrency];
+        }
+
+        private async Task<IDictionary<string, decimal>> FetchCurrencyRatesAsync(
+            string baseCurrency,
+            IEnumerable<string> convertCurrencies,
+            CancellationToken cancellationToken = default)
+        {
+            var queryParams = string.Format("?base={0}&symbols={1}&places={2}", baseCurrency, string.Join(",", convertCurrencies), GlobalConstants.DecimalPlaces);
+
+            using var httpClient = this.httpClientFactory.CreateClient("CurrencyAPI");
+
+            var currencyInfo = await httpClient.GetFromJsonAsync<CurrencyInfo>(queryParams, cancellationToken);
+
+            if (currencyInfo == null)
+            {
+                throw new ArgumentException(string.Format("Could not retrieve {0} to {1} currency info",
+                                                        baseCurrency,
+                                                        string.Join(",", convertCurrencies)));
+            }
+
+            return currencyInfo.Rates;
+        }
+
+        private static decimal CalculateUpdatedCurrencyRate(decimal value)
+        {
+            int sign = rnd.Next(-1, 2);
+            decimal delta = rnd.Next(maxDeltaOffset) / precision;
+
+            return value + sign * delta;
         }
     }
 }

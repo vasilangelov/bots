@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 
 using BOTS.Data;
@@ -8,6 +7,9 @@ using BOTS.Web.Extensions;
 using BOTS.Services;
 using BOTS.Data.Seeding;
 using BOTS.Web.Hubs;
+using BOTS.Services.Data.Common;
+using BOTS.Services.Data.CurrencyPairs;
+using BOTS.Services.Data.TradingWindows;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,20 +40,20 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 
 builder.Services.AddSignalR();
 
-builder.Services.Configure<JsonSerializerOptions>(options =>
-{
-    options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-});
 builder.Services.Configure<ApplicationUserOptions>(builder.Configuration.GetSection("ApplicationUserOptions"));
 
-// TODO: extract name constants...
-builder.Services.AddHttpClient("CurrencyApi", options =>
+builder.Services.AddHttpClient("CurrencyAPI", options =>
  {
      options.BaseAddress = new Uri("https://api.exchangerate.host/latest");
  });
-builder.Services.AddSingleton<ICurrencyProviderService, CurrencyProviderService>();
+
 builder.Services.AddHostedService<CurrencyHostedService>();
+
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddTransient<ICurrencyProviderService, CurrencyProviderService>();
+builder.Services.AddTransient<ICurrencyPairService, CurrencyPairService>();
+builder.Services.AddTransient<ITradingWindowOptionService, TradingWindowOptionService>();
+builder.Services.AddTransient<ITradingWindowService, TradingWindowService>();
 
 // Configure pipeline...
 var app = builder.Build();

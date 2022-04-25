@@ -3,29 +3,29 @@
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
 
-    using BOTS.Services;
-    using BOTS.Data.Models;
     using BOTS.Web.Models;
+    using BOTS.Services.Data.CurrencyPairs;
 
     [Authorize]
     public class TradesController : Controller
     {
-        private readonly IRepository<CurrencyPair> currencyPairRepository;
+        private readonly ICurrencyPairService currencyPairService;
 
-        public TradesController(IRepository<CurrencyPair> currencyPairRepository)
+        public TradesController(ICurrencyPairService currencyPairService)
         {
-            this.currencyPairRepository = currencyPairRepository;
+            this.currencyPairService = currencyPairService;
         }
 
-        public IActionResult Live()
+        public async Task<IActionResult> Live()
         {
             var model = new LiveViewModel
             {
-                CurrencyPairs = this.currencyPairRepository.AllAsNotracking().Where(x => x.Display).Select(x => new CurrencyPairViewModel
+                CurrencyPairs = await this.currencyPairService.GetActiveCurrencyPairsAsync(x => new CurrencyPairViewModel
                 {
+                    Id = x.Id,
                     LeftName = x.Left.Name,
-                    RightName = x.Right.Name
-                }).ToArray(),
+                    RightName = x.Right.Name,
+                })
             };
 
             return this.View(model);

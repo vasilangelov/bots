@@ -4,69 +4,101 @@
 
     using BOTS.Services;
     using BOTS.Web.Hubs;
-    using BOTS.Data.Models;
     using BOTS.Common;
+    using BOTS.Services.Data.CurrencyPairs;
+    using BOTS.Services.Data.TradingWindows;
+    using BOTS.Web.Models;
 
     public class CurrencyHostedService : BackgroundService
     {
-        private readonly ICurrencyProviderService currencyProviderService;
-        private readonly IHubContext<CurrencyHub> currencyHub;
+        private readonly IHubContext<CurrencyHub> hubContext;
         private readonly IServiceProvider serviceProvider;
 
-        private IEnumerable<KeyValuePair<string, string>> groupsAvailable = default!;
-
-        public CurrencyHostedService(ICurrencyProviderService currencyProviderService,
-                                     IHubContext<CurrencyHub> currencyHub,
-                                     IServiceProvider serviceProvider)
+        public CurrencyHostedService(IHubContext<CurrencyHub> hubContext, IServiceProvider serviceProvider)
         {
-            this.currencyProviderService = currencyProviderService;
-            this.currencyHub = currencyHub;
+            this.hubContext = hubContext;
             this.serviceProvider = serviceProvider;
         }
 
-        public override async Task StartAsync(CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            using (var scope = this.serviceProvider.CreateScope())
+            while (!cancellationToken.IsCancellationRequested)
             {
-                var currencyPair = scope.ServiceProvider.GetRequiredService<IRepository<CurrencyPair>>();
-
-                this.groupsAvailable = currencyPair
-                                        .AllAsNotracking()
-                                        .Where(x => x.Display)
-                                        .Select(x => new KeyValuePair<string, string>(x.Left.Name, x.Right.Name))
-                                        .ToArray();
-            }
-
-            if (this.groupsAvailable is null)
-            {
-                throw new NullReferenceException("Available groups not found");
-            }
-
-            await base.StartAsync(cancellationToken);
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                await this.currencyProviderService.UpdateCurrencyInfoAsync(stoppingToken);
-
-                foreach (var group in groupsAvailable)
+                using (var scope = this.serviceProvider.CreateScope())
                 {
-                    decimal currencyRate = this.currencyProviderService
-                                                    .GetCurrencyRate(group.Key, group.Value);
+                    var currencyPairService = scope.ServiceProvider.GetRequiredService<ICurrencyPairService>();
 
-                    string groupName = string.Format(GlobalConstants.CurrencyPairFormat,
-                                                     group.Key,
-                                                     group.Value);
+                    var activeCurrencyRates = await currencyPairService.GetActiveCurrencyPairNamesAsync(cancellationToken);
 
-                    await this.currencyHub
-                        .Clients
-                        .Group(groupName)
-                        .SendAsync("CurrencyRateUpdate", currencyRate, stoppingToken);
+                    var currencyProviderService = scope.ServiceProvider.GetRequiredService<ICurrencyProviderService>();
+
+                    await currencyProviderService.UpdateCurrencyRatesAsync(activeCurrencyRates, cancellationToken);
+
+                    IEnumerable<int> currencyPairIds = await currencyPairService.GetActiveCurrencyPairIdsAsync(cancellationToken);
+
+                    var tradingWindowService = scope.ServiceProvider.GetRequiredService<ITradingWindowService>();
+
+                    await tradingWindowService.EnsureAllTradingWindowsActiveAsync(currencyPairIds, cancellationToken);
+
+                    var now = DateTime.UtcNow;
+
+                    foreach (var currencyPairId in currencyPairIds)
+                    {
+                        decimal currencyRate = await currencyPairService.GetCurrencyRateAsync(currencyPairId, cancellationToken);
+
+                        await this.hubContext.Clients
+                                    .Group(currencyPairId.ToString())
+                                    .SendAsync("UpdateCurrencyRate", currencyRate, cancellationToken);
+
+                        var tradingWindows = await tradingWindowService.GetActiveTradingWindowsByCurrencyPairAsync(currencyPairId, x => new
+                        {
+                            x.Id,
+                            x.OpeningPrice,
+                            x.Start,
+                            x.End,
+                            x.Option.BarrierCount,
+                            x.Option.BarrierStep,
+                        }, cancellationToken);
+
+                        foreach (var tradingWindow in tradingWindows)
+                        {
+                            var fullTime = (int)tradingWindow.End.Subtract(tradingWindow.Start).TotalSeconds;
+                            var remaining = (int)tradingWindow.End.Subtract(now).TotalSeconds;
+                            var delta = tradingWindow.BarrierCount * tradingWindow.BarrierStep;
+
+                            int lower = tradingWindow.BarrierCount / 2;
+
+                            var model = Enumerable.Range(0, tradingWindow.BarrierCount).Select(x =>
+                            {
+                                var barrier = tradingWindow.OpeningPrice + (x - lower) * tradingWindow.BarrierStep;
+
+                                decimal high = 0;
+                                decimal low = 0;
+
+                                try
+                                {
+                                    high = 0.5m + ((currencyRate - barrier) / (1.25m * delta * remaining / fullTime));
+                                    low = 0.5m + ((barrier - currencyRate) / (1.25m * delta * remaining / fullTime));
+                                }
+                                catch (DivideByZeroException)
+                                {
+
+                                }
+
+                                return new BarrierViewModel
+                                {
+                                    Barrier = barrier,
+                                    High = high,
+                                    Low = low,
+                                };
+                            }).Reverse().ToArray();
+
+                            await this.hubContext.Clients.Group(tradingWindow.Id).SendAsync("UpdateTradingWindow", model, cancellationToken);
+                        }
+                    }
                 }
 
-                await Task.Delay(GlobalConstants.CurrencyValueUpdateFrequency, stoppingToken);
+                await Task.Delay(GlobalConstants.CurrencyValueUpdateFrequency, cancellationToken);
             }
         }
     }

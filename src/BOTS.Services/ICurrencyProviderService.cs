@@ -2,8 +2,11 @@
 {
     public interface ICurrencyProviderService
     {
-        decimal GetCurrencyRate(string left, string right);
+        Task<decimal> GetCurrencyRateAsync(string baseCurrency,
+                                        string convertCurrency,
+                                        CancellationToken cancellationToken = default);
 
-        Task UpdateCurrencyInfoAsync(CancellationToken cancellationToken = default);
+        Task UpdateCurrencyRatesAsync(IDictionary<string, IEnumerable<string>> currencyPairs,
+                                                   CancellationToken cancellationToken = default);
     }
 }

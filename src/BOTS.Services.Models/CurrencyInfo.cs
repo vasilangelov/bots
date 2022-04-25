@@ -2,11 +2,11 @@
 {
     using System.Text.Json.Serialization;
 
-    internal class CurrencyInfo
+    public class CurrencyInfo
     {
         public string Base { get; set; } = default!;
 
         [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-        public Dictionary<string, decimal> Rates { get; set; } = default!;
+        public IDictionary<string, decimal> Rates { get; set; } = default!;
     }
 }

@@ -1,7 +1,6 @@
 ﻿namespace BOTS.Data.Seeding
 {
     using Microsoft.EntityFrameworkCore;
-    using System.Threading.Tasks;
 
     using Models;
 

@@ -2,8 +2,8 @@
 {
     public static class GlobalConstants
     {
-        public const string CurrencyPairFormat = "{0}/{1}";
-
         public const int CurrencyValueUpdateFrequency = 3000;
+
+        public const byte DecimalPlaces = 6;
     }
 }
