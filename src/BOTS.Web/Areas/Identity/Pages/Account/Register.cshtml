@@ -1,4 +1,5 @@
 ﻿@page
+@using BOTS.Web.Models
 @model RegisterModel
 @{
     ViewData["Title"] = "Register";
@@ -33,12 +34,7 @@
                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
             </div>
             <div class="form-floating">
-                <select asp-for="Input.NationalityId" class="form-select" aria-label="Select nationality">
-                    @foreach (var el in Model.Nationalities)
-                    {
-                        <option value="@el.Id">@el.Name</option>
-                    }
-                </select>
+                <select asp-for="Input.NationalityId" class="form-select" aria-label="Select nationality" asp-items="@(new SelectList(Model.Nationalities, nameof(NationalityViewModel.Id), nameof(Nationality.Name)))"></select>
                 <label asp-for="Input.NationalityId"></label>
                 <span asp-validation-for="Input.NationalityId" class="text-danger"></span>
             </div>

@@ -13,6 +13,7 @@ using BOTS.Services.Data.CurrencyPairs;
 using BOTS.Services.Data.TradingWindows;
 using BOTS.Services.Mapping;
 using BOTS.Web.Models;
+using BOTS.Services.Data.Nationalities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,7 @@ builder.Services.AddAutoMapper(typeof(ErrorViewModel).Assembly, typeof(TradingWi
 
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddTransient<ICurrencyProviderService, CurrencyProviderService>();
+builder.Services.AddTransient<INationalityService, NationalityService>();
 builder.Services.AddTransient<ICurrencyPairService, CurrencyPairService>();
 builder.Services.AddTransient<ITradingWindowOptionService, TradingWindowOptionService>();
 builder.Services.AddTransient<ITradingWindowService, TradingWindowService>();

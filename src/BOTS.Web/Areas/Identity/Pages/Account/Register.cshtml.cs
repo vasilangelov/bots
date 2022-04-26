@@ -15,7 +15,8 @@ using System.Text.Encodings.Web;
 
 using BOTS.Data.Models;
 using BOTS.Services;
-using BOTS.Services.Data.Common;
+using BOTS.Services.Data.Nationalities;
+using BOTS.Web.Models;
 
 namespace BOTS.Web.Areas.Identity.Pages.Account
 {
@@ -27,7 +28,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
-        private readonly IRepository<Nationality> _nationalityRepository;
+        private readonly INationalityService _nationalityService;
         private readonly ApplicationUserOptions _applicationUserOptions;
 
         public RegisterModel(
@@ -36,8 +37,8 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
-            IOptions<ApplicationUserOptions> applicationUserOptions,
-            IRepository<Nationality> nationalityRepository)
+            INationalityService nationalityService,
+            IOptions<ApplicationUserOptions> applicationUserOptions)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -45,11 +46,11 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
-            _nationalityRepository = nationalityRepository;
+            _nationalityService = nationalityService;
             _applicationUserOptions = applicationUserOptions.Value;
         }
 
-        public IEnumerable<Nationality> Nationalities { get; set; }
+        public IEnumerable<NationalityViewModel> Nationalities { get; set; }
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -116,11 +117,13 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
         }
 
 
-        public async Task OnGetAsync(string returnUrl = null)
+        public async Task<IActionResult> OnGetAsync(string returnUrl = null)
         {
-            Nationalities = this._nationalityRepository.AllAsNotracking().ToArray();
+            Nationalities = await _nationalityService.GetAllNationalitiesAsync<NationalityViewModel>();
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -129,7 +132,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
-                bool isValidNationality = _nationalityRepository.AllAsNotracking().Any(x => x.Id == Input.NationalityId);
+                bool isValidNationality = await _nationalityService.NationalityExistsAsync(Input.NationalityId);
 
                 if (!isValidNationality)
                 {
@@ -180,7 +183,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             }
 
             // If we got this far, something failed, redisplay form
-            return Page();
+            return await OnGetAsync();
         }
 
         private ApplicationUser CreateUser()
