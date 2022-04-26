@@ -25,6 +25,7 @@
     <ProjectReference Include="..\BOTS.Data.Models\BOTS.Data.Models.csproj" />
     <ProjectReference Include="..\BOTS.Data\BOTS.Data.csproj" />
     <ProjectReference Include="..\BOTS.Services.Data\BOTS.Services.Data.csproj" />
+    <ProjectReference Include="..\BOTS.Services.Mapping\BOTS.Services.Mapping.csproj" />
   </ItemGroup>
 
 </Project>

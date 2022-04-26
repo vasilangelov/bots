@@ -6,6 +6,7 @@
 
     using BOTS.Services.Data.CurrencyPairs;
     using BOTS.Services.Data.TradingWindows;
+    using BOTS.Web.Models;
 
     [Authorize]
     public class CurrencyHub : Hub
@@ -48,17 +49,19 @@
             using var scope = this.serviceProvider.CreateScope();
             var tradingWindowService = scope.ServiceProvider.GetRequiredService<ITradingWindowService>();
 
-            var endTime = await tradingWindowService.GetTradingWindowAsync(tradingWindowId, x => x.End);
+            bool isTradingWindowActive = await tradingWindowService.IsTradingWindowActiveAsync(tradingWindowId);
 
-            if (DateTime.UtcNow >= endTime)
+            if (!isTradingWindowActive)
             {
                 // TODO: display error message...
                 return;
             }
 
+            var model = await tradingWindowService.GetTradingWindowAsync<TradingWindowEndViewModel>(tradingWindowId);
+
             await this.Groups.AddToGroupAsync(this.Context.ConnectionId, tradingWindowId);
 
-            await this.Clients.Caller.SendAsync("UpdateTimer", ((DateTimeOffset)endTime).ToUnixTimeMilliseconds());
+            await this.Clients.Caller.SendAsync("UpdateTimer", model);
         }
 
         public async Task RemoveTradingWindowSubscription(string tradingWindowId)
@@ -72,12 +75,7 @@
 
             var tradingWindowService = scope.ServiceProvider.GetRequiredService<ITradingWindowService>();
 
-            var result = await tradingWindowService.GetActiveTradingWindowsByCurrencyPairAsync(currencyPairId, x => new
-            {
-                x.Id,
-                Start = ((DateTimeOffset)x.Start).ToUnixTimeMilliseconds(),
-                End = ((DateTimeOffset)x.End).ToUnixTimeMilliseconds(),
-            });
+            var result = await tradingWindowService.GetActiveTradingWindowsByCurrencyPairAsync<ActiveTradingWindowViewModel>(currencyPairId);
 
             await this.Clients.Caller.SendAsync("SetTradingWindows", result);
         }

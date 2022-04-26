@@ -20,12 +20,7 @@
         {
             var model = new LiveViewModel
             {
-                CurrencyPairs = await this.currencyPairService.GetActiveCurrencyPairsAsync(x => new CurrencyPairViewModel
-                {
-                    Id = x.Id,
-                    LeftName = x.Left.Name,
-                    RightName = x.Right.Name,
-                })
+                CurrencyPairs = await this.currencyPairService.GetActiveCurrencyPairsAsync<CurrencyPairViewModel>()
             };
 
             return this.View(model);

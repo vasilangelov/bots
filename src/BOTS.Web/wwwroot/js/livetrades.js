@@ -31,13 +31,13 @@ connection.on('UpdateCurrencyRate', (cr) => {
     currencyRateDiv.textContent = cr;
 });
 
-connection.on('UpdateTimer', (time) => {
+connection.on('UpdateTimer', ({ end }) => {
     if (!!activeTimer) {
         clearInterval(activeTimer);
         activeTimer = undefined;
     }
 
-    const endMilliseconds = Date.fromUTCTime(time);
+    const endMilliseconds = new Date(end);
     activeTimer = setInterval(() => {
         const remaining = endMilliseconds.getTime() - Date.now();
 

@@ -1,6 +1,9 @@
 ﻿namespace BOTS.Web.Models
 {
-    public class CurrencyPairViewModel
+    using BOTS.Data.Models;
+    using BOTS.Services.Mapping;
+
+    public class CurrencyPairViewModel : IMapFrom<CurrencyPair>
     {
         public int Id { get; set; }
 

@@ -50,27 +50,19 @@
                                     .Group(currencyPairId.ToString())
                                     .SendAsync("UpdateCurrencyRate", currencyRate, cancellationToken);
 
-                        var tradingWindows = await tradingWindowService.GetActiveTradingWindowsByCurrencyPairAsync(currencyPairId, x => new
-                        {
-                            x.Id,
-                            x.OpeningPrice,
-                            x.Start,
-                            x.End,
-                            x.Option.BarrierCount,
-                            x.Option.BarrierStep,
-                        }, cancellationToken);
+                        var tradingWindows = await tradingWindowService.GetActiveTradingWindowsByCurrencyPairAsync<TradingWindowViewModel>(currencyPairId, cancellationToken);
 
                         foreach (var tradingWindow in tradingWindows)
                         {
                             var fullTime = (int)tradingWindow.End.Subtract(tradingWindow.Start).TotalSeconds;
                             var remaining = (int)tradingWindow.End.Subtract(now).TotalSeconds;
-                            var delta = tradingWindow.BarrierCount * tradingWindow.BarrierStep;
+                            var delta = tradingWindow.OptionBarrierCount * tradingWindow.OptionBarrierStep;
 
-                            int lower = tradingWindow.BarrierCount / 2;
+                            int lower = tradingWindow.OptionBarrierCount / 2;
 
-                            var model = Enumerable.Range(0, tradingWindow.BarrierCount).Select(x =>
+                            var model = Enumerable.Range(0, tradingWindow.OptionBarrierCount).Select(x =>
                             {
-                                var barrier = tradingWindow.OpeningPrice + (x - lower) * tradingWindow.BarrierStep;
+                                var barrier = tradingWindow.OpeningPrice + (x - lower) * tradingWindow.OptionBarrierStep;
 
                                 decimal high = 0;
                                 decimal low = 0;

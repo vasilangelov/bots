@@ -1,17 +1,20 @@
 ﻿namespace BOTS.Services.Data.CurrencyPairs
 {
-    using System.Linq.Expressions;
+    using AutoMapper;
+    using AutoMapper.QueryableExtensions;
     using Microsoft.EntityFrameworkCore;
 
     public class CurrencyPairService : ICurrencyPairService
     {
         private readonly ICurrencyProviderService currencyProviderService;
         private readonly IRepository<CurrencyPair> currencyPairRepository;
+        private readonly IMapper mapper;
 
-        public CurrencyPairService(ICurrencyProviderService currencyProviderService, IRepository<CurrencyPair> currencyPairRepository)
+        public CurrencyPairService(ICurrencyProviderService currencyProviderService, IRepository<CurrencyPair> currencyPairRepository, IMapper mapper)
         {
             this.currencyProviderService = currencyProviderService;
             this.currencyPairRepository = currencyPairRepository;
+            this.mapper = mapper;
         }
 
         public async Task<IEnumerable<string>> GetActiveCurrenciesAsync()
@@ -42,13 +45,12 @@
                                 .Select(x => x.Id)
                                 .ToArrayAsync(cancellationToken);
 
-        // TODO: Automapper
-        public async Task<IEnumerable<T>> GetActiveCurrencyPairsAsync<T>(Expression<Func<CurrencyPair, T>> selector)
+        public async Task<IEnumerable<T>> GetActiveCurrencyPairsAsync<T>(CancellationToken cancellationToken = default)
             => await currencyPairRepository
                                 .AllAsNotracking()
                                 .Where(x => x.Display)
-                                .Select(selector)
-                                .ToArrayAsync();
+                                .ProjectTo<T>(mapper.ConfigurationProvider)
+                                .ToArrayAsync(cancellationToken);
 
         public async Task<decimal> GetCurrencyRateAsync(int currencyPairId,
                                                         CancellationToken cancellationToken = default)

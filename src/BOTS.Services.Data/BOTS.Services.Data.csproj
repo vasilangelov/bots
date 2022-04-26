@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="11.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BOTS.Data.Models\BOTS.Data.Models.csproj" />
     <ProjectReference Include="..\BOTS.Services\BOTS.Services.csproj" />
   </ItemGroup>

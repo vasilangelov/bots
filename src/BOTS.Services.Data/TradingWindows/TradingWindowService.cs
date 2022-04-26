@@ -1,43 +1,56 @@
 ﻿namespace BOTS.Services.Data.TradingWindows
 {
+    using AutoMapper;
+    using AutoMapper.QueryableExtensions;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Caching.Memory;
 
     using BOTS.Services.Data.CurrencyPairs;
-    using System.Linq.Expressions;
+    using BOTS.Services.Models;
 
     public class TradingWindowService : ITradingWindowService
     {
         private readonly IRepository<TradingWindow> tradingWindowRepository;
         private readonly ICurrencyPairService currencyPairService;
         private readonly ITradingWindowOptionService tradingWindowOptionService;
+        private readonly IMapper mapper;
         private readonly IMemoryCache memoryCache;
 
         public TradingWindowService(IRepository<TradingWindow> tradingWindowRepository,
                                     ICurrencyPairService currencyPairService,
                                     ITradingWindowOptionService tradingWindowOptionService,
+                                    IMapper mapper,
                                     IMemoryCache memoryCache)
         {
             this.tradingWindowRepository = tradingWindowRepository;
             this.currencyPairService = currencyPairService;
             this.tradingWindowOptionService = tradingWindowOptionService;
+            this.mapper = mapper;
             this.memoryCache = memoryCache;
         }
 
-        // TODO: AutoMapper...
         public async Task<IEnumerable<T>> GetActiveTradingWindowsByCurrencyPairAsync<T>(
             int currencyPairId,
-            Expression<Func<TradingWindow, T>> selector,
             CancellationToken cancellationToken = default)
-        {
-            return await this.tradingWindowRepository
+            => await this.tradingWindowRepository
                         .AllAsNotracking()
                         .Where(x => x.CurrencyPairId == currencyPairId &&
                                     x.End > DateTime.UtcNow)
                         .OrderBy(x => x.Option.Duration)
-                        .Select(selector)
+                        .ProjectTo<T>(this.mapper.ConfigurationProvider)
                         .ToArrayAsync(cancellationToken);
-        }
+
+        public async Task<T> GetTradingWindowAsync<T>(string tradingWindowId, CancellationToken cancellationToken = default)
+            => await this.tradingWindowRepository
+                                .AllAsNotracking()
+                                .Where(x => x.Id == tradingWindowId)
+                                .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                                .FirstAsync(cancellationToken);
+
+        public async Task<bool> IsTradingWindowActiveAsync(string tradingWindowId, CancellationToken cancellationToken = default)
+            => await this.tradingWindowRepository
+                        .AllAsNotracking()
+                        .AnyAsync(x => x.Id == tradingWindowId && x.End > DateTime.UtcNow, cancellationToken);
 
         public async Task EnsureAllTradingWindowsActiveAsync(
             IEnumerable<int> currencyPairIds,
@@ -53,7 +66,7 @@
                                     .ToListAsync(cancellationToken);
             }
 
-            var tradingWindowOptions = await this.tradingWindowOptionService.GetAllTradingWindowOptionsAsync(x => x, cancellationToken);
+            var tradingWindowOptions = await this.tradingWindowOptionService.GetAllTradingWindowOptionsAsync<TradingWindowOptionInfo>(cancellationToken);
 
             var endedTradingWindows = tradingWindows.Where(x => x.End <= DateTime.UtcNow).ToArray();
 
@@ -120,11 +133,5 @@
             await this.tradingWindowRepository.SaveChangesAsync();
         }
 
-        public async Task<T?> GetTradingWindowAsync<T>(string tradingWindowId, Expression<Func<TradingWindow, T>> selector, CancellationToken cancellationToken = default)
-            => await this.tradingWindowRepository
-                                .AllAsNotracking()
-                                .Where(x => x.Id == tradingWindowId)
-                                .Select(selector)
-                                .FirstOrDefaultAsync(cancellationToken);
     }
 }

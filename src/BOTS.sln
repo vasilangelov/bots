@@ -23,7 +23,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOTS.Common", "BOTS.Common\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOTS.Services.Data", "BOTS.Services.Data\BOTS.Services.Data.csproj", "{0B0788A5-CC66-4DC7-9129-A4ADB3C7DDE1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BOTS.Services.Models", "BOTS.Services.Models\BOTS.Services.Models.csproj", "{BE45C734-2CFF-478F-A5B6-D765583F664E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BOTS.Services.Models", "BOTS.Services.Models\BOTS.Services.Models.csproj", "{BE45C734-2CFF-478F-A5B6-D765583F664E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BOTS.Services.Mapping", "BOTS.Services.Mapping\BOTS.Services.Mapping.csproj", "{E28E3E35-D58A-499E-8C3D-F9A93A31379E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,6 +61,10 @@ Global
 		{BE45C734-2CFF-478F-A5B6-D765583F664E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BE45C734-2CFF-478F-A5B6-D765583F664E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BE45C734-2CFF-478F-A5B6-D765583F664E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E28E3E35-D58A-499E-8C3D-F9A93A31379E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E28E3E35-D58A-499E-8C3D-F9A93A31379E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E28E3E35-D58A-499E-8C3D-F9A93A31379E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E28E3E35-D58A-499E-8C3D-F9A93A31379E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -71,6 +77,7 @@ Global
 		{68104BB0-AD21-44FA-870F-87F63CC0D46A} = {66B28BBA-7D50-40A9-B144-C426C6975729}
 		{0B0788A5-CC66-4DC7-9129-A4ADB3C7DDE1} = {86FB5FD2-9672-4D16-ADE4-A4063E3CECF6}
 		{BE45C734-2CFF-478F-A5B6-D765583F664E} = {86FB5FD2-9672-4D16-ADE4-A4063E3CECF6}
+		{E28E3E35-D58A-499E-8C3D-F9A93A31379E} = {86FB5FD2-9672-4D16-ADE4-A4063E3CECF6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E19A94FE-17F5-4BEB-B6FB-CA5AED730F8F}

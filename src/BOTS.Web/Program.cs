@@ -5,11 +5,14 @@ using BOTS.Data.Models;
 using BOTS.Web.BackgroundServices;
 using BOTS.Web.Extensions;
 using BOTS.Services;
+using BOTS.Services.Models;
 using BOTS.Data.Seeding;
 using BOTS.Web.Hubs;
 using BOTS.Services.Data.Common;
 using BOTS.Services.Data.CurrencyPairs;
 using BOTS.Services.Data.TradingWindows;
+using BOTS.Services.Mapping;
+using BOTS.Web.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +51,8 @@ builder.Services.AddHttpClient("CurrencyAPI", options =>
  });
 
 builder.Services.AddHostedService<CurrencyHostedService>();
+
+builder.Services.AddAutoMapper(typeof(ErrorViewModel).Assembly, typeof(TradingWindowOptionInfo).Assembly);
 
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddTransient<ICurrencyProviderService, CurrencyProviderService>();

@@ -7,7 +7,3 @@
 
     return e;
 }
-
-Date.fromUTCTime = function (milliseconds) {
-    return new Date(milliseconds - (new Date().getTimezoneOffset() * 60000));
-}
