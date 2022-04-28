@@ -3,46 +3,45 @@
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
     using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.Caching.Memory;
+    using System.Collections.Concurrent;
+
+    using BOTS.Services.Currencies;
 
     public class CurrencyPairService : ICurrencyPairService
     {
-        private readonly ICurrencyProviderService currencyProviderService;
+        private static readonly object currencyRateNamesKey = new();
+
+        private readonly ICurrencyRateProviderService currencyRateProviderService;
+        private readonly IMemoryCache memoryCache;
         private readonly IRepository<CurrencyPair> currencyPairRepository;
         private readonly IMapper mapper;
 
-        public CurrencyPairService(ICurrencyProviderService currencyProviderService, IRepository<CurrencyPair> currencyPairRepository, IMapper mapper)
+        public CurrencyPairService(
+            ICurrencyRateProviderService currencyRateProviderService,
+            IMemoryCache memoryCache,
+            IRepository<CurrencyPair> currencyPairRepository,
+            IMapper mapper)
         {
-            this.currencyProviderService = currencyProviderService;
+            this.currencyRateProviderService = currencyRateProviderService;
+            this.memoryCache = memoryCache;
             this.currencyPairRepository = currencyPairRepository;
             this.mapper = mapper;
         }
-
-        public async Task<IEnumerable<string>> GetActiveCurrenciesAsync()
-            => await currencyPairRepository
-                                .AllAsNotracking()
-                                .Where(x => x.Display)
-                                .Select(x => x.Left.Name)
-                                .Concat(currencyPairRepository
-                                    .AllAsNotracking()
-                                    .Where(x => x.Display)
-                                    .Select(x => x.Right.Name))
-                                .Distinct()
-                                .ToArrayAsync();
-
-        public async Task<IDictionary<string, IEnumerable<string>>> GetActiveCurrencyPairNamesAsync(CancellationToken cancellationToken = default)
-            => (await this.currencyPairRepository
-                                .AllAsNotracking()
-                                .Where(x => x.Display)
-                                .Select(x => new { Left = x.Left.Name, Right = x.Right.Name })
-                                .ToArrayAsync(cancellationToken))
-                                .GroupBy(x => x.Left)
-                                .ToDictionary(x => x.Key, x => x.Select(y => y.Right).AsEnumerable());
 
         public async Task<IEnumerable<int>> GetActiveCurrencyPairIdsAsync(CancellationToken cancellationToken = default)
             => await currencyPairRepository
                                 .AllAsNotracking()
                                 .Where(x => x.Display)
                                 .Select(x => x.Id)
+                                .ToArrayAsync(cancellationToken);
+
+        public async Task<IEnumerable<(string, string)>> GetActiveCurrencyPairNamesAsync(
+            CancellationToken cancellationToken = default)
+            => await this.currencyPairRepository
+                                .AllAsNotracking()
+                                .Where(x => x.Display)
+                                .Select(x => new Tuple<string, string>(x.Left.Name, x.Right.Name).ToValueTuple())
                                 .ToArrayAsync(cancellationToken);
 
         public async Task<IEnumerable<T>> GetActiveCurrencyPairsAsync<T>(CancellationToken cancellationToken = default)
@@ -52,26 +51,41 @@
                                 .ProjectTo<T>(mapper.ConfigurationProvider)
                                 .ToArrayAsync(cancellationToken);
 
-        public async Task<decimal> GetCurrencyRateAsync(int currencyPairId,
-                                                        CancellationToken cancellationToken = default)
+        public async Task<decimal> GetCurrencyRateAsync(
+            int currencyPairId,
+            CancellationToken cancellationToken = default)
         {
-            (string left, string right) = await this.GetCurrencyPairNamesAsync(currencyPairId);
+            ConcurrentDictionary<int, (string, string)> currencyRateNames;
 
-            return await this.currencyProviderService.GetCurrencyRateAsync(left, right, cancellationToken);
+            lock (currencyRateNamesKey)
+            {
+                currencyRateNames = this.memoryCache.GetOrCreate<ConcurrentDictionary<int, (string, string)>>(currencyRateNamesKey, _ => new());
+            }
+
+            if (!currencyRateNames.ContainsKey(currencyPairId))
+            {
+                var (from, to) = await this.GetCurrencyPairNamesAsync(currencyPairId, cancellationToken);
+
+                currencyRateNames.TryAdd(currencyPairId, (from, to));
+            }
+
+            var (fromCurrency, toCurrency) = currencyRateNames[currencyPairId];
+
+            return await this.currencyRateProviderService.GetCurrencyRateAsync(fromCurrency, toCurrency, cancellationToken);
         }
 
-        public async Task<bool> IsCurrencyPairActiveAsync(int currencyPairId)
+        public async Task<bool> IsCurrencyPairActiveAsync(int currencyPairId, CancellationToken cancellationToken = default)
             => await currencyPairRepository
                                 .AllAsNotracking()
-                                .AnyAsync(x => x.Id == currencyPairId && x.Display);
+                                .AnyAsync(x => x.Id == currencyPairId && x.Display, cancellationToken);
 
-        private async Task<(string Left, string Right)> GetCurrencyPairNamesAsync(int currencyPairId)
+        private async Task<(string FromCurrency, string ToCurrency)> GetCurrencyPairNamesAsync(int currencyPairId, CancellationToken cancellationToken = default)
         {
-            var currencyPair = await currencyPairRepository
+            var currencyPair = await this.currencyPairRepository
                                 .AllAsNotracking()
                                 .Where(x => x.Id == currencyPairId)
                                 .Select(x => new { Left = x.Left.Name, Right = x.Right.Name })
-                                .FirstAsync();
+                                .FirstAsync(cancellationToken);
 
             return (currencyPair.Left, currencyPair.Right);
         }

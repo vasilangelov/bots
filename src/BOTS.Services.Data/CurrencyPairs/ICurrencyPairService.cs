@@ -4,11 +4,9 @@
     {
         Task<decimal> GetCurrencyRateAsync(int currencyPairId, CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<string>> GetActiveCurrenciesAsync();
+        Task<bool> IsCurrencyPairActiveAsync(int currencyPairId, CancellationToken cancellationToken = default);
 
-        Task<IDictionary<string, IEnumerable<string>>> GetActiveCurrencyPairNamesAsync(CancellationToken cancellationToken = default);
-
-        Task<bool> IsCurrencyPairActiveAsync(int currencyPairId);
+        Task<IEnumerable<(string, string)>> GetActiveCurrencyPairNamesAsync(CancellationToken cancellationToken = default);
 
         Task<IEnumerable<T>> GetActiveCurrencyPairsAsync<T>(CancellationToken cancellationToken = default);
 

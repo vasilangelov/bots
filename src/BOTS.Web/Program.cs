@@ -6,7 +6,6 @@ using BOTS.Web.BackgroundServices;
 using BOTS.Web.Extensions;
 using BOTS.Services;
 using BOTS.Services.Models;
-using BOTS.Data.Seeding;
 using BOTS.Web.Hubs;
 using BOTS.Services.Data.Common;
 using BOTS.Services.Data.CurrencyPairs;
@@ -14,6 +13,7 @@ using BOTS.Services.Data.TradingWindows;
 using BOTS.Services.Mapping;
 using BOTS.Web.Models;
 using BOTS.Services.Data.Nationalities;
+using BOTS.Services.Currencies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,32 +46,35 @@ builder.Services.AddSignalR();
 
 builder.Services.Configure<ApplicationUserOptions>(builder.Configuration.GetSection("ApplicationUserOptions"));
 
+builder.Services.AddHttpClient<ThirdPartyCurrencyRateProviderService>();
+
 builder.Services.AddHttpClient("CurrencyAPI", options =>
  {
-     options.BaseAddress = new Uri("https://api.exchangerate.host/latest");
  });
 
-builder.Services.AddHostedService<CurrencyHostedService>();
+builder.Services.AddHostedService<CurrencyRateGeneratorBackgroundService>();
+builder.Services.AddHostedService<CurrencyRateBackgroundService>();
+builder.Services.AddHostedService<TradingWindowBackgroundService>();
 
 builder.Services.AddAutoMapper(typeof(ErrorViewModel).Assembly, typeof(TradingWindowOptionInfo).Assembly);
 
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
-builder.Services.AddTransient<ICurrencyProviderService, CurrencyProviderService>();
 builder.Services.AddTransient<INationalityService, NationalityService>();
 builder.Services.AddTransient<ICurrencyPairService, CurrencyPairService>();
-builder.Services.AddTransient<ITradingWindowOptionService, TradingWindowOptionService>();
 builder.Services.AddTransient<ITradingWindowService, TradingWindowService>();
+builder.Services.AddTransient<ITradingWindowOptionService, TradingWindowOptionService>();
+builder.Services.AddTransient<ThirdPartyCurrencyRateProviderService>();
+
+builder.Services.AddSingleton<ICurrencyRateProviderService, CurrencyGeneratorService>();
+builder.Services.AddSingleton<ICurrencyRateGeneratorService>(x => (ICurrencyRateGeneratorService)x.GetRequiredService<ICurrencyRateProviderService>());
 
 // Configure pipeline...
 var app = builder.Build();
+
 await app.MigrateDatabaseAsync();
+await app.SeedDatabaseAsync();
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-    await ApplicationDbContextSeeder.SeedAsync(dbContext);
-}
+await app.SeedCurrenciesAsync();
 
 if (app.Environment.IsDevelopment())
 {

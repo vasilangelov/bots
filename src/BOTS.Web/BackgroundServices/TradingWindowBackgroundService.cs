@@ -2,22 +2,21 @@
 {
     using Microsoft.AspNetCore.SignalR;
 
-    using BOTS.Services;
-    using BOTS.Web.Hubs;
     using BOTS.Common;
     using BOTS.Services.Data.CurrencyPairs;
     using BOTS.Services.Data.TradingWindows;
+    using BOTS.Web.Hubs;
     using BOTS.Web.Models;
 
-    public class CurrencyHostedService : BackgroundService
+    public class TradingWindowBackgroundService : BackgroundService
     {
-        private readonly IHubContext<CurrencyHub> hubContext;
         private readonly IServiceProvider serviceProvider;
+        private readonly IHubContext<CurrencyHub> currencyHub;
 
-        public CurrencyHostedService(IHubContext<CurrencyHub> hubContext, IServiceProvider serviceProvider)
+        public TradingWindowBackgroundService(IServiceProvider serviceProvider, IHubContext<CurrencyHub> currencyHub)
         {
-            this.hubContext = hubContext;
             this.serviceProvider = serviceProvider;
+            this.currencyHub = currencyHub;
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -28,28 +27,19 @@
                 {
                     var currencyPairService = scope.ServiceProvider.GetRequiredService<ICurrencyPairService>();
 
-                    var activeCurrencyRates = await currencyPairService.GetActiveCurrencyPairNamesAsync(cancellationToken);
-
-                    var currencyProviderService = scope.ServiceProvider.GetRequiredService<ICurrencyProviderService>();
-
-                    await currencyProviderService.UpdateCurrencyRatesAsync(activeCurrencyRates, cancellationToken);
-
                     IEnumerable<int> currencyPairIds = await currencyPairService.GetActiveCurrencyPairIdsAsync(cancellationToken);
+
+                    var now = DateTime.UtcNow;
 
                     var tradingWindowService = scope.ServiceProvider.GetRequiredService<ITradingWindowService>();
 
                     await tradingWindowService.EnsureAllTradingWindowsActiveAsync(currencyPairIds, cancellationToken);
 
-                    var now = DateTime.UtcNow;
-
                     foreach (var currencyPairId in currencyPairIds)
                     {
                         decimal currencyRate = await currencyPairService.GetCurrencyRateAsync(currencyPairId, cancellationToken);
 
-                        await this.hubContext.Clients
-                                    .Group(currencyPairId.ToString())
-                                    .SendAsync("UpdateCurrencyRate", currencyRate, cancellationToken);
-
+                        // TODO: reduce number of db requests...
                         var tradingWindows = await tradingWindowService.GetActiveTradingWindowsByCurrencyPairAsync<TradingWindowViewModel>(currencyPairId, cancellationToken);
 
                         foreach (var tradingWindow in tradingWindows)
@@ -85,12 +75,12 @@
                                 };
                             }).Reverse().ToArray();
 
-                            await this.hubContext.Clients.Group(tradingWindow.Id).SendAsync("UpdateTradingWindow", model, cancellationToken);
+                            await this.currencyHub.Clients.Group(tradingWindow.Id).SendAsync("UpdateTradingWindow", model, cancellationToken);
                         }
                     }
                 }
 
-                await Task.Delay(GlobalConstants.CurrencyValueUpdateFrequency, cancellationToken);
+                await Task.Delay(GlobalConstants.TradingWindowUpdateFrequency, cancellationToken);
             }
         }
     }

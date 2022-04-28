@@ -1,8 +1,8 @@
-﻿namespace BOTS.Services.Models
+﻿namespace BOTS.Services.Currencies.Models
 {
     using System.Text.Json.Serialization;
 
-    public class CurrencyInfo
+    internal class CurrencyRateInfo
     {
         public string Base { get; set; } = default!;
 
