@@ -7,6 +7,7 @@
     using System.Collections.Concurrent;
 
     using BOTS.Services.Currencies;
+    using BOTS.Services.Infrastructure.Extensions;
 
     public class CurrencyPairService : ICurrencyPairService
     {
@@ -36,7 +37,7 @@
                                 .Select(x => x.Id)
                                 .ToArrayAsync(cancellationToken);
 
-        public async Task<IEnumerable<(string, string)>> GetActiveCurrencyPairNamesAsync(
+        public async Task<IEnumerable<(string, string)>> GetAllActiveCurrencyPairNamesAsync(
             CancellationToken cancellationToken = default)
             => await this.currencyPairRepository
                                 .AllAsNotracking()
@@ -55,21 +56,7 @@
             int currencyPairId,
             CancellationToken cancellationToken = default)
         {
-            ConcurrentDictionary<int, (string, string)> currencyRateNames;
-
-            lock (currencyRateNamesKey)
-            {
-                currencyRateNames = this.memoryCache.GetOrCreate<ConcurrentDictionary<int, (string, string)>>(currencyRateNamesKey, _ => new());
-            }
-
-            if (!currencyRateNames.ContainsKey(currencyPairId))
-            {
-                var (from, to) = await this.GetCurrencyPairNamesAsync(currencyPairId, cancellationToken);
-
-                currencyRateNames.TryAdd(currencyPairId, (from, to));
-            }
-
-            var (fromCurrency, toCurrency) = currencyRateNames[currencyPairId];
+            var (fromCurrency, toCurrency) = await this.GetCurrencyPairNamesAsync(currencyPairId, cancellationToken);
 
             return await this.currencyRateProviderService.GetCurrencyRateAsync(fromCurrency, toCurrency, cancellationToken);
         }
@@ -79,15 +66,22 @@
                                 .AllAsNotracking()
                                 .AnyAsync(x => x.Id == currencyPairId && x.Display, cancellationToken);
 
-        private async Task<(string FromCurrency, string ToCurrency)> GetCurrencyPairNamesAsync(int currencyPairId, CancellationToken cancellationToken = default)
+        public async Task<(string, string)> GetCurrencyPairNamesAsync(int currencyPairId, CancellationToken cancellationToken = default)
         {
-            var currencyPair = await this.currencyPairRepository
+            var currencyRateNames = this.memoryCache.GetOrAdd<ConcurrentDictionary<int, (string, string)>>(currencyRateNamesKey, () => new());
+
+            if (!currencyRateNames.ContainsKey(currencyPairId))
+            {
+                var (from, to) = await this.currencyPairRepository
                                 .AllAsNotracking()
                                 .Where(x => x.Id == currencyPairId)
-                                .Select(x => new { Left = x.Left.Name, Right = x.Right.Name })
+                                .Select(x => new Tuple<string, string>(x.Left.Name, x.Right.Name).ToValueTuple())
                                 .FirstAsync(cancellationToken);
 
-            return (currencyPair.Left, currencyPair.Right);
+                currencyRateNames.TryAdd(currencyPairId, (from, to));
+            }
+
+            return currencyRateNames[currencyPairId];
         }
     }
 }

@@ -6,7 +6,9 @@
 
         Task<bool> IsCurrencyPairActiveAsync(int currencyPairId, CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<(string, string)>> GetActiveCurrencyPairNamesAsync(CancellationToken cancellationToken = default);
+        Task<(string, string)> GetCurrencyPairNamesAsync(int currencyPairId, CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<(string, string)>> GetAllActiveCurrencyPairNamesAsync(CancellationToken cancellationToken = default);
 
         Task<IEnumerable<T>> GetActiveCurrencyPairsAsync<T>(CancellationToken cancellationToken = default);
 

@@ -55,6 +55,7 @@ builder.Services.AddHttpClient("CurrencyAPI", options =>
 builder.Services.AddHostedService<CurrencyRateGeneratorBackgroundService>();
 builder.Services.AddHostedService<CurrencyRateBackgroundService>();
 builder.Services.AddHostedService<TradingWindowBackgroundService>();
+builder.Services.AddHostedService<CurrencyRateHistoryBackgroundService>();
 
 builder.Services.AddAutoMapper(typeof(ErrorViewModel).Assembly, typeof(TradingWindowOptionInfo).Assembly);
 
@@ -67,6 +68,7 @@ builder.Services.AddTransient<ThirdPartyCurrencyRateProviderService>();
 
 builder.Services.AddSingleton<ICurrencyRateProviderService, CurrencyGeneratorService>();
 builder.Services.AddSingleton<ICurrencyRateGeneratorService>(x => (ICurrencyRateGeneratorService)x.GetRequiredService<ICurrencyRateProviderService>());
+builder.Services.AddSingleton<ICurrencyRateHistoryProviderService, CurrencyRateHistoryGeneratorService>();
 
 // Configure pipeline...
 var app = builder.Build();

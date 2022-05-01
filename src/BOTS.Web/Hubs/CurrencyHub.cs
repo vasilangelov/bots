@@ -7,15 +7,19 @@
     using BOTS.Services.Data.CurrencyPairs;
     using BOTS.Services.Data.TradingWindows;
     using BOTS.Web.Models;
+    using BOTS.Services.Currencies;
 
     [Authorize]
     public class CurrencyHub : Hub
     {
         private readonly IServiceProvider serviceProvider;
+        private readonly ICurrencyRateHistoryProviderService currencyRateHistoryProviderService;
 
-        public CurrencyHub(IServiceProvider serviceProvider)
+        public CurrencyHub(IServiceProvider serviceProvider,
+                           ICurrencyRateHistoryProviderService currencyRateHistoryProviderService)
         {
             this.serviceProvider = serviceProvider;
+            this.currencyRateHistoryProviderService = currencyRateHistoryProviderService;
         }
 
         public async Task AddCurrencyRateSubscription(int currencyPairId)
@@ -37,6 +41,19 @@
             decimal currencyRate = await currencyPairService.GetCurrencyRateAsync(currencyPairId);
 
             await this.Clients.Caller.SendAsync("UpdateCurrencyRate", currencyRate);
+
+            var (fromCurrency, toCurrency) = await currencyPairService.GetCurrencyPairNamesAsync(currencyPairId);
+
+            var currencyRateHistory = await this.currencyRateHistoryProviderService
+                .GetCurrencyRateHistoryAsync<CurrencyRateHistoryViewModel>(
+                    fromCurrency,
+                    toCurrency,
+                    // TODO: remove hardcoded temp values...
+                    DateTime.UtcNow,
+                    TimeSpan.FromSeconds(5),
+                    TimeSpan.FromMinutes(10));
+
+            await this.Clients.Caller.SendAsync("SetCurrencyRateHistory", currencyRateHistory);
         }
 
         public async Task RemoveCurrencyRateSubscription(int currencyPairId)

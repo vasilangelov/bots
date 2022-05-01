@@ -34,7 +34,7 @@
 
             var currencyRateGeneratorService = scope.ServiceProvider.GetRequiredService<ICurrencyRateGeneratorService>();
 
-            var activeCurrencies = await currencyPairService.GetActiveCurrencyPairNamesAsync();
+            var activeCurrencies = await currencyPairService.GetAllActiveCurrencyPairNamesAsync();
 
             await currencyRateGeneratorService.SeedInitialCurrencyRatesAsync(activeCurrencies);
         }

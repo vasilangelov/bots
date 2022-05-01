@@ -8,6 +8,7 @@ const tradingWindowsSelect = document.getElementById('tradingWindows');
 const barrierContainer = document.getElementById('barrierContainer');
 const payoutInput = document.getElementById('payoutInput');
 const timeRemainingField = document.getElementById('timeRemaining');
+
 let currentCurrencyPair;
 let currentSubscribedTradingWindow;
 let activeTimer;
@@ -37,25 +38,22 @@ connection.on('UpdateTimer', ({ end }) => {
         activeTimer = undefined;
     }
 
-    const endMilliseconds = new Date(end);
+    const endDate = new Date(end);
+
     activeTimer = setInterval(() => {
-        const remaining = endMilliseconds.getTime() - Date.now();
+        const remaining = endDate.getTime() - Date.now();
 
         if (remaining < 0) {
             currentSubscribedTradingWindow = undefined;
             requestTradingWindows();
         }
 
-        const hours = Math.floor(Math.abs(remaining / 1000 / 60 / 60));
-        const minutes = Math.floor(Math.abs(remaining / 1000 / 60));
-        const seconds = Math.floor(Math.abs(remaining / 1000 % 60));
-
-        const hrs = hours < 10 ? `0${hours}` : hours;
-        const mnts = minutes < 10 ? `0${minutes}` : minutes;
-        const scnds = seconds < 10 ? `0${seconds}` : seconds;
+        const hours = Math.floor(Math.abs(remaining / 1000 / 60 / 60)).toString().padStart(2, '0');
+        const minutes = Math.floor(Math.abs(remaining / 1000 / 60)).toString().padStart(2, '0');
+        const seconds = Math.floor(Math.abs(remaining / 1000 % 60)).toString().padStart(2, '0');
         const sign = remaining < 0 ? '-' : '';
 
-        timeRemainingField.textContent = `${sign}${hrs}:${mnts}:${scnds}`;
+        timeRemainingField.textContent = `${sign}${hours}:${minutes}:${seconds}`;
     }, 500);
 });
 
