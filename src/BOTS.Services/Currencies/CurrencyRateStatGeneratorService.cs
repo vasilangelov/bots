@@ -1,16 +1,19 @@
 ﻿namespace BOTS.Services.Currencies
 {
     using AutoMapper;
+    using System.Collections.Concurrent;
 
     using BOTS.Services.Currencies.Models;
     using BOTS.Services.Infrastructure.Extensions;
 
-    public class CurrencyRateHistoryGeneratorService : ICurrencyRateHistoryProviderService
+    public class CurrencyRateStatGeneratorService : ICurrencyRateStatProviderService
     {
+        private static readonly ConcurrentDictionary<(string, string), DateTime> lastUpdated = new();
+
         private readonly ICurrencyRateProviderService currencyRateProviderService;
         private readonly IMapper mapper;
 
-        public CurrencyRateHistoryGeneratorService(
+        public CurrencyRateStatGeneratorService(
             ICurrencyRateProviderService currencyRateProviderService,
             IMapper mapper)
         {
@@ -18,10 +21,9 @@
             this.mapper = mapper;
         }
 
-        public async Task<T> GetCurrencyRateHistoryAsync<T>(
+        public async Task<T> GetLatestCurrencyRateStatAsync<T>(
             string fromCurrency,
             string toCurrency,
-
             CancellationToken cancellationToken = default)
         {
             var currencyRate = await this.currencyRateProviderService.GetCurrencyRateAsync(fromCurrency, toCurrency, cancellationToken);
@@ -32,9 +34,13 @@
             var highValue = Math.Max(openValue, currencyRate) + rnd.NextDecimal(0.0005m, 0.0001m);
             var lowValue = Math.Min(openValue, currencyRate) - rnd.NextDecimal(0.0005m, 0.0001m);
 
+            DateTime end = DateTime.UtcNow;
+
+            lastUpdated[(fromCurrency, toCurrency)] = end;
+
             var result = new CurrencyRateHistory
             {
-                Time = DateTime.UtcNow,
+                Time = end,
                 Open = openValue,
                 High = highValue,
                 Low = lowValue,
@@ -44,17 +50,32 @@
             return this.mapper.Map<T>(result);
         }
 
-        public async Task<IEnumerable<T>> GetCurrencyRateHistoryAsync<T>(
+        public async Task<IEnumerable<T>> GetLatestCurrencyRateStatsAsync<T>(
             string fromCurrency,
             string toCurrency,
+            DateTime start,
+            TimeSpan interval,
+            CancellationToken cancellationToken = default)
+        {
+            bool success = lastUpdated.TryGetValue((fromCurrency, toCurrency), out var end);
+
+            return await this.GetCurrencyRateStatsAsync<T>(
+                fromCurrency,
+                toCurrency,
+                start,
+                end,
+                interval);
+        }
+
+        public async Task<IEnumerable<T>> GetCurrencyRateStatsAsync<T>(
+            string fromCurrency,
+            string toCurrency,
+            DateTime start,
             DateTime end,
             TimeSpan interval,
-            TimeSpan timeRange,
             CancellationToken cancellationToken = default)
         {
             Random rnd = new(0);
-
-            var start = end.Subtract(timeRange);
 
             var currencyRateHistory = new Stack<CurrencyRateHistory>();
 

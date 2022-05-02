@@ -8,15 +8,16 @@
     using BOTS.Services.Data.TradingWindows;
     using BOTS.Web.Models;
     using BOTS.Services.Currencies;
+    using BOTS.Common;
 
     [Authorize]
     public class CurrencyHub : Hub
     {
         private readonly IServiceProvider serviceProvider;
-        private readonly ICurrencyRateHistoryProviderService currencyRateHistoryProviderService;
+        private readonly ICurrencyRateStatProviderService currencyRateHistoryProviderService;
 
         public CurrencyHub(IServiceProvider serviceProvider,
-                           ICurrencyRateHistoryProviderService currencyRateHistoryProviderService)
+                           ICurrencyRateStatProviderService currencyRateHistoryProviderService)
         {
             this.serviceProvider = serviceProvider;
             this.currencyRateHistoryProviderService = currencyRateHistoryProviderService;
@@ -44,16 +45,15 @@
 
             var (fromCurrency, toCurrency) = await currencyPairService.GetCurrencyPairNamesAsync(currencyPairId);
 
-            var currencyRateHistory = await this.currencyRateHistoryProviderService
-                .GetCurrencyRateHistoryAsync<CurrencyRateHistoryViewModel>(
+            var currencyRateStats = await this.currencyRateHistoryProviderService
+                .GetLatestCurrencyRateStatsAsync<CurrencyRateHistoryViewModel>(
                     fromCurrency,
                     toCurrency,
                     // TODO: remove hardcoded temp values...
-                    DateTime.UtcNow,
-                    TimeSpan.FromSeconds(5),
-                    TimeSpan.FromMinutes(10));
+                    DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(10)),
+                    TimeSpan.FromMilliseconds(GlobalConstants.CurrencyRateStatUpdateFrequency));
 
-            await this.Clients.Caller.SendAsync("SetCurrencyRateHistory", currencyRateHistory);
+            await this.Clients.Caller.SendAsync("SetCurrencyRateHistory", currencyRateStats);
         }
 
         public async Task RemoveCurrencyRateSubscription(int currencyPairId)

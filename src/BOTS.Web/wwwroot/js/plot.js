@@ -1,4 +1,4 @@
-﻿const xPeriod = 5000;
+﻿const xPeriod = 3000;
 let chart;
 let timeRange;
 

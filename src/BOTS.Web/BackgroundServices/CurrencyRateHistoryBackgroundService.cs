@@ -7,16 +7,18 @@
     using BOTS.Web.Models;
     using BOTS.Web.Hubs;
     using BOTS.Common;
+    using System.Threading.Tasks;
+    using System.Threading;
 
     public class CurrencyRateHistoryBackgroundService : BackgroundService
     {
         private readonly IServiceProvider serviceProvider;
-        private readonly ICurrencyRateHistoryProviderService currencyRateHistoryProvider;
+        private readonly ICurrencyRateStatProviderService currencyRateHistoryProvider;
         private readonly IHubContext<CurrencyHub> hubContext;
 
         public CurrencyRateHistoryBackgroundService(
             IServiceProvider serviceProvider,
-            ICurrencyRateHistoryProviderService currencyRateHistoryProvider,
+            ICurrencyRateStatProviderService currencyRateHistoryProvider,
             IHubContext<CurrencyHub> hubContext)
         {
             this.serviceProvider = serviceProvider;
@@ -32,28 +34,25 @@
                 {
                     var currencyPairService = scope.ServiceProvider.GetRequiredService<ICurrencyPairService>();
 
-                    var currencyPairIds = await currencyPairService.GetActiveCurrencyPairIdsAsync(cancellationToken);
+                    var currencyPairs = await currencyPairService.GetActiveCurrencyPairsAsync<CurrencyPairViewModel>(cancellationToken);
 
-                    foreach (var currencyPairId in currencyPairIds)
-                    {
-                        var (fromCurrency, toCurrency) = await currencyPairService.GetCurrencyPairNamesAsync(currencyPairId, cancellationToken);
+                    await Parallel.ForEachAsync(
+                        currencyPairs,
+                        async (p, ct) =>
+                        {
+                            var model = await this.currencyRateHistoryProvider
+                                .GetLatestCurrencyRateStatAsync<CurrencyRateHistoryViewModel>(
+                                    p.LeftName,
+                                    p.RightName,
+                                    cancellationToken);
 
-                        var model = await this.currencyRateHistoryProvider
-                            .GetCurrencyRateHistoryAsync<CurrencyRateHistoryViewModel>(
-                            fromCurrency,
-                            toCurrency,
-                            cancellationToken);
-
-                        await this.hubContext.Clients.Group(currencyPairId.ToString()).SendAsync(
-                            "AddCurrencyRateHistory",
-                            model,
-                            cancellationToken);
-                    }
+                            await this.hubContext.Clients
+                                .Group(p.Id.ToString())
+                                .SendAsync("AddCurrencyRateHistory", model, ct);
+                        });
                 }
 
-                await Task.Delay(
-                    GlobalConstants.CurrencyRateHistoryUpdateFrequency,
-                    cancellationToken);
+                await Task.Delay(GlobalConstants.CurrencyRateStatUpdateFrequency, cancellationToken);
             }
         }
     }

@@ -68,7 +68,7 @@ builder.Services.AddTransient<ThirdPartyCurrencyRateProviderService>();
 
 builder.Services.AddSingleton<ICurrencyRateProviderService, CurrencyGeneratorService>();
 builder.Services.AddSingleton<ICurrencyRateGeneratorService>(x => (ICurrencyRateGeneratorService)x.GetRequiredService<ICurrencyRateProviderService>());
-builder.Services.AddSingleton<ICurrencyRateHistoryProviderService, CurrencyRateHistoryGeneratorService>();
+builder.Services.AddSingleton<ICurrencyRateStatProviderService, CurrencyRateStatGeneratorService>();
 
 // Configure pipeline...
 var app = builder.Build();
