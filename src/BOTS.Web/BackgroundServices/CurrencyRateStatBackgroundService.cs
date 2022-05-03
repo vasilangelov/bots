@@ -10,19 +10,19 @@
     using System.Threading.Tasks;
     using System.Threading;
 
-    public class CurrencyRateHistoryBackgroundService : BackgroundService
+    public class CurrencyRateStatBackgroundService : BackgroundService
     {
         private readonly IServiceProvider serviceProvider;
-        private readonly ICurrencyRateStatProviderService currencyRateHistoryProvider;
+        private readonly ICurrencyRateStatProviderService currencyRateStatProvider;
         private readonly IHubContext<CurrencyHub> hubContext;
 
-        public CurrencyRateHistoryBackgroundService(
+        public CurrencyRateStatBackgroundService(
             IServiceProvider serviceProvider,
-            ICurrencyRateStatProviderService currencyRateHistoryProvider,
+            ICurrencyRateStatProviderService currencyRateStatProvider,
             IHubContext<CurrencyHub> hubContext)
         {
             this.serviceProvider = serviceProvider;
-            this.currencyRateHistoryProvider = currencyRateHistoryProvider;
+            this.currencyRateStatProvider = currencyRateStatProvider;
             this.hubContext = hubContext;
         }
 
@@ -40,7 +40,7 @@
                         currencyPairs,
                         async (p, ct) =>
                         {
-                            var model = await this.currencyRateHistoryProvider
+                            var model = await this.currencyRateStatProvider
                                 .GetLatestCurrencyRateStatAsync<CurrencyRateHistoryViewModel>(
                                     p.LeftName,
                                     p.RightName,

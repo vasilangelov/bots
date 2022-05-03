@@ -48,14 +48,10 @@ builder.Services.Configure<ApplicationUserOptions>(builder.Configuration.GetSect
 
 builder.Services.AddHttpClient<ThirdPartyCurrencyRateProviderService>();
 
-builder.Services.AddHttpClient("CurrencyAPI", options =>
- {
- });
-
 builder.Services.AddHostedService<CurrencyRateGeneratorBackgroundService>();
 builder.Services.AddHostedService<CurrencyRateBackgroundService>();
 builder.Services.AddHostedService<TradingWindowBackgroundService>();
-builder.Services.AddHostedService<CurrencyRateHistoryBackgroundService>();
+builder.Services.AddHostedService<CurrencyRateStatBackgroundService>();
 
 builder.Services.AddAutoMapper(typeof(ErrorViewModel).Assembly, typeof(TradingWindowOptionInfo).Assembly);
 

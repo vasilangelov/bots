@@ -28,6 +28,19 @@ function requestTradingWindows() {
         .invoke('GetActiveTradingWindows', currentCurrencyPair);
 }
 
+function changeButtonPrice(btn, payout, value) {
+    if (value >= payout) {
+        btn.disabled = true;
+        btn.textContent = payout.toFixed(2);
+    } else if (value <= 0) {
+        btn.disabled = true;
+        btn.textContent = Number(0).toFixed(2);
+    } else {
+        btn.disabled = false;
+        btn.textContent = value.toFixed(2);
+    }
+}
+
 connection.on('UpdateCurrencyRate', (cr) => {
     currencyRateDiv.textContent = cr;
 });
@@ -84,27 +97,42 @@ connection.on('SetTradingWindows', (windows) => {
 connection.on('UpdateTradingWindow', (windows) => {
     const payout = Number(payoutInput.value);
 
-    barrierContainer.innerHTML = '';
-    windows.forEach(w => {
-        const tr = el('tr');
+    windows.forEach((w, i) => {
+        let barrier = barrierContainer.children[i];
 
-        const th = el('th', { scope: 'row', textContent: w.barrier });
+        if (barrier === undefined) {
+            const tr = el('tr');
 
-        const tdh = el('td');
-        const tdl = el('td');
+            const th = el('th', { scope: 'row' });
 
-        const btnh = el('button', { textContent: (Math.round(w.high * payout * 100) / 100).toFixed(2), className: 'btn btn-primary container-fluid' });
-        const btnl = el('button', { textContent: (Math.round(w.low * payout * 100) / 100).toFixed(2), className: 'btn btn-danger container-fluid' });
+            const tdh = el('td');
+            const tdl = el('td');
 
-        tdh.appendChild(btnh);
-        tdl.appendChild(btnl);
+            const btnh = el('button', { className: 'btn btn-primary container-fluid' });
+            const btnl = el('button', { className: 'btn btn-danger container-fluid' });
 
-        tr.appendChild(th);
-        tr.appendChild(tdh);
-        tr.appendChild(tdl);
+            tdh.appendChild(btnh);
+            tdl.appendChild(btnl);
 
-        barrierContainer.appendChild(tr);
-    })
+            tr.appendChild(th);
+            tr.appendChild(tdh);
+            tr.appendChild(tdl);
+
+            barrierContainer.appendChild(tr);
+
+            barrier = barrierContainer.children[i];
+        }
+
+        barrier.querySelector('th').textContent = w.barrier;
+
+        const higherEntry = Math.round(w.high * payout * 100) / 100;
+        const higherBtn = barrier.querySelector('td > button.btn-primary');
+        changeButtonPrice(higherBtn, payout, higherEntry);
+
+        const lowerEntry = Math.round(w.low * payout * 100) / 100;
+        const lowerBtn = barrier.querySelector('td > button.btn-danger');
+        changeButtonPrice(lowerBtn, payout, lowerEntry);
+    });
 });
 
 connection.start()

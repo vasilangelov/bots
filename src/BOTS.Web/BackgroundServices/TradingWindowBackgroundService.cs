@@ -13,7 +13,9 @@
         private readonly IServiceProvider serviceProvider;
         private readonly IHubContext<CurrencyHub> currencyHub;
 
-        public TradingWindowBackgroundService(IServiceProvider serviceProvider, IHubContext<CurrencyHub> currencyHub)
+        public TradingWindowBackgroundService(
+            IServiceProvider serviceProvider,
+            IHubContext<CurrencyHub> currencyHub)
         {
             this.serviceProvider = serviceProvider;
             this.currencyHub = currencyHub;
@@ -44,8 +46,8 @@
 
                         foreach (var tradingWindow in tradingWindows)
                         {
-                            var fullTime = (int)tradingWindow.End.Subtract(tradingWindow.Start).TotalSeconds;
-                            var remaining = (int)tradingWindow.End.Subtract(now).TotalSeconds;
+                            decimal fullTime = (int)tradingWindow.End.Subtract(tradingWindow.Start).TotalSeconds;
+                            decimal remaining = (int)tradingWindow.End.Subtract(now).TotalSeconds;
                             var delta = tradingWindow.OptionBarrierCount * tradingWindow.OptionBarrierStep;
 
                             int lower = tradingWindow.OptionBarrierCount / 2;
@@ -54,18 +56,8 @@
                             {
                                 var barrier = tradingWindow.OpeningPrice + (x - lower) * tradingWindow.OptionBarrierStep;
 
-                                decimal high = 0;
-                                decimal low = 0;
-
-                                try
-                                {
-                                    high = 0.5m + ((currencyRate - barrier) / (1.25m * delta * remaining / fullTime));
-                                    low = 0.5m + ((barrier - currencyRate) / (1.25m * delta * remaining / fullTime));
-                                }
-                                catch (DivideByZeroException)
-                                {
-
-                                }
+                                decimal high = (currencyRate - barrier) / delta + 0.5m * (2 - remaining / fullTime);
+                                decimal low = (barrier - currencyRate) / delta + 0.5m * (2 - remaining / fullTime);
 
                                 return new BarrierViewModel
                                 {

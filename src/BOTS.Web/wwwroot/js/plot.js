@@ -59,7 +59,7 @@ connection.on('SetCurrencyRateHistory', (histories) => {
     if (!chart) {
         chart = document.getElementById('chart');
 
-        let interval;
+        let intervalHandle;
         let lastEventData;
 
         chart.on('plotly_relayout', (e) => {
@@ -69,11 +69,12 @@ connection.on('SetCurrencyRateHistory', (histories) => {
 
             lastEventData = e;
 
-            if (interval !== undefined) {
-                return;
+            if (intervalHandle !== undefined) {
+                clearTimeout(intervalHandle);
+                intervalHandle = undefined;
             }
 
-            interval = setTimeout(() => {
+            intervalHandle = setTimeout(() => {
                 let from, to;
 
                 if (typeof lastEventData['xaxsis.range[0]'] === 'string' &&
@@ -88,7 +89,7 @@ connection.on('SetCurrencyRateHistory', (histories) => {
 
                 timeRange = [from, to];
 
-                interval = undefined;
+                intervalHandle = undefined;
             }, 500);
         });
     }

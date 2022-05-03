@@ -89,7 +89,8 @@
 
                     if (!isTradingWindowActive)
                     {
-                        var tradingWindow = await this.CreateTradingWindowAsync(currencyPairId,
+                        var tradingWindow = await this.CreateTradingWindowAsync(
+                                                            currencyPairId,
                                                             tradingWindowOption.Id,
                                                             tradingWindowOption.Duration,
                                                             cancellationToken);
