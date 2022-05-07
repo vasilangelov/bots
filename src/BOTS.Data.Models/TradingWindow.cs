@@ -28,5 +28,7 @@
         public DateTime Start { get; set; }
 
         public DateTime End { get; set; }
+
+        public virtual IEnumerable<Bet> Bets { get; set; } = new HashSet<Bet>();
     }
 }

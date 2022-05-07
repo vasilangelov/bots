@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 using BOTS.Data;
@@ -11,9 +12,11 @@ using BOTS.Services.Data.Common;
 using BOTS.Services.Data.CurrencyPairs;
 using BOTS.Services.Data.TradingWindows;
 using BOTS.Services.Mapping;
-using BOTS.Web.Models;
 using BOTS.Services.Data.Nationalities;
 using BOTS.Services.Currencies;
+using BOTS.Services.Data.Bets;
+using BOTS.Services.Data.Users;
+using BOTS.Web.Models.ViewModels;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,8 +33,10 @@ if (builder.Environment.IsDevelopment())
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options
+        .UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
     options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._";
@@ -42,7 +47,13 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 
 }).AddEntityFrameworkStores<ApplicationDbContext>();
 
-builder.Services.AddSignalR();
+builder.Services
+    .AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        options.PayloadSerializerOptions.Converters
+           .Add(new JsonStringEnumConverter());
+    });
 
 builder.Services.Configure<ApplicationUserOptions>(builder.Configuration.GetSection("ApplicationUserOptions"));
 
@@ -60,6 +71,8 @@ builder.Services.AddTransient<INationalityService, NationalityService>();
 builder.Services.AddTransient<ICurrencyPairService, CurrencyPairService>();
 builder.Services.AddTransient<ITradingWindowService, TradingWindowService>();
 builder.Services.AddTransient<ITradingWindowOptionService, TradingWindowOptionService>();
+builder.Services.AddTransient<IBetService, BetService>();
+builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<ThirdPartyCurrencyRateProviderService>();
 
 builder.Services.AddSingleton<ICurrencyRateProviderService, CurrencyGeneratorService>();

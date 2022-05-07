@@ -2,7 +2,6 @@
 {
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
-    using Microsoft.EntityFrameworkCore;
 
     public class TradingWindowOptionService : ITradingWindowOptionService
     {

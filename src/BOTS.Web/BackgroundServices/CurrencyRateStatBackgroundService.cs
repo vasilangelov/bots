@@ -1,14 +1,15 @@
 ﻿namespace BOTS.Web.BackgroundServices
 {
     using Microsoft.AspNetCore.SignalR;
+    using System.Threading.Tasks;
+    using System.Threading;
 
     using BOTS.Services.Currencies;
     using BOTS.Services.Data.CurrencyPairs;
     using BOTS.Web.Models;
     using BOTS.Web.Hubs;
     using BOTS.Common;
-    using System.Threading.Tasks;
-    using System.Threading;
+    using BOTS.Web.Models.ViewModels;
 
     public class CurrencyRateStatBackgroundService : BackgroundService
     {

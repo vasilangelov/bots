@@ -2,16 +2,23 @@
     .withUrl('/Currencies/Live')
     .build();
 
+const numberFormat = /^[0-9]+(?:.[0-9]{1,2})?$/m;
+
 const currencyRateDiv = document.getElementById('currencyRate');
 const currencyPairSelect = document.getElementById('currencyPair');
 const tradingWindowsSelect = document.getElementById('tradingWindows');
 const barrierContainer = document.getElementById('barrierContainer');
 const payoutInput = document.getElementById('payoutInput');
 const timeRemainingField = document.getElementById('timeRemaining');
+const portfolioContainer = document.getElementById('activeBets');
+const balanceContainer = document.getElementById('balance');
 
+let activeBets = [];
+let windowInfo = [];
 let currentCurrencyPair;
 let currentSubscribedTradingWindow;
 let activeTimer;
+let payout = Number(payoutInput.value);
 
 function addCurrencySubscription() {
     currentCurrencyPair = Number(currencyPairSelect.value);
@@ -28,6 +35,10 @@ function requestTradingWindows() {
         .invoke('GetActiveTradingWindows', currentCurrencyPair);
 }
 
+function requestActiveBets() {
+    connection.invoke('GetActiveBets');
+}
+
 function changeButtonPrice(btn, payout, value) {
     if (value >= payout) {
         btn.disabled = true;
@@ -39,6 +50,61 @@ function changeButtonPrice(btn, payout, value) {
         btn.disabled = false;
         btn.textContent = value.toFixed(2);
     }
+}
+
+function renderBarriers() {
+    windowInfo.forEach((w, i) => {
+        let barrier = barrierContainer.children[i];
+
+        if (barrier === undefined) {
+            const tr = el('tr');
+
+            const th = el('th', { scope: 'row' });
+
+            const tdh = el('td');
+            const tdl = el('td');
+
+            const btnh = el('button', { className: 'btn btn-primary container-fluid' }, { 'data-barrier-number': windowInfo.length - i - 1, 'data-prediction': 'Higher' });
+            const btnl = el('button', { className: 'btn btn-danger container-fluid' }, { 'data-barrier-number': windowInfo.length - i - 1, 'data-prediction': 'Lower' });
+
+            tdh.appendChild(btnh);
+            tdl.appendChild(btnl);
+
+            tr.appendChild(th);
+            tr.appendChild(tdh);
+            tr.appendChild(tdl);
+
+            barrierContainer.appendChild(tr);
+
+            barrier = barrierContainer.children[i];
+        }
+
+        barrier.querySelector('th').textContent = w.barrier;
+
+        const higherEntry = Math.round(w.high * payout * 100) / 100;
+        const higherBtn = barrier.querySelector('td > button.btn-primary');
+        changeButtonPrice(higherBtn, payout, higherEntry);
+
+        const lowerEntry = Math.round(w.low * payout * 100) / 100;
+        const lowerBtn = barrier.querySelector('td > button.btn-danger');
+        changeButtonPrice(lowerBtn, payout, lowerEntry);
+    });
+}
+
+// TODO: when remove rendered bet???
+function renderBets() {
+    portfolioContainer.innerHTML = '';
+
+    activeBets.forEach(bet => {
+        const tr = el('tr');
+
+        tr.appendChild(el('td', { textContent: bet.id }));
+        tr.appendChild(el('td', { textContent: `${bet.currencyPair} is ${bet.type} than ${bet.barrier} on ${new Date(bet.endsOn).toLocaleString()}` }));
+        tr.appendChild(el('td', { textContent: bet.entryFee.toFixed(2) }));
+        tr.appendChild(el('td', { textContent: bet.payout.toFixed(2) }));
+
+        portfolioContainer.appendChild(tr);
+    });
 }
 
 connection.on('UpdateCurrencyRate', (cr) => {
@@ -95,49 +161,33 @@ connection.on('SetTradingWindows', (windows) => {
 });
 
 connection.on('UpdateTradingWindow', (windows) => {
-    const payout = Number(payoutInput.value);
+    windowInfo = [];
 
     windows.forEach((w, i) => {
-        let barrier = barrierContainer.children[i];
-
-        if (barrier === undefined) {
-            const tr = el('tr');
-
-            const th = el('th', { scope: 'row' });
-
-            const tdh = el('td');
-            const tdl = el('td');
-
-            const btnh = el('button', { className: 'btn btn-primary container-fluid' });
-            const btnl = el('button', { className: 'btn btn-danger container-fluid' });
-
-            tdh.appendChild(btnh);
-            tdl.appendChild(btnl);
-
-            tr.appendChild(th);
-            tr.appendChild(tdh);
-            tr.appendChild(tdl);
-
-            barrierContainer.appendChild(tr);
-
-            barrier = barrierContainer.children[i];
-        }
-
-        barrier.querySelector('th').textContent = w.barrier;
-
-        const higherEntry = Math.round(w.high * payout * 100) / 100;
-        const higherBtn = barrier.querySelector('td > button.btn-primary');
-        changeButtonPrice(higherBtn, payout, higherEntry);
-
-        const lowerEntry = Math.round(w.low * payout * 100) / 100;
-        const lowerBtn = barrier.querySelector('td > button.btn-danger');
-        changeButtonPrice(lowerBtn, payout, lowerEntry);
+        windowInfo[i] = w;
     });
+
+    renderBarriers();
+});
+
+connection.on('DisplayBet', (betInfo) => {
+    activeBets.push(betInfo);
+    renderBets();
+});
+
+connection.on('SetActiveBets', (bets) => {
+    activeBets = bets;
+    renderBets();
+});
+
+connection.on('UpdateBalance', (balance) => {
+    balanceContainer.textContent = balance.toFixed(2);
 });
 
 connection.start()
     .then(addCurrencySubscription)
-    .then(requestTradingWindows);
+    .then(requestTradingWindows)
+    .then(requestActiveBets);
 
 currencyPairSelect.addEventListener('change', () => {
     removeCurrencySubscription()
@@ -145,9 +195,7 @@ currencyPairSelect.addEventListener('change', () => {
         .then(requestTradingWindows);
 });
 
-tradingWindowsSelect.addEventListener('focusin', () => {
-    requestTradingWindows();
-});
+tradingWindowsSelect.addEventListener('focusin', requestTradingWindows);
 
 tradingWindowsSelect.addEventListener('change', () => {
     const id = tradingWindowsSelect.value;
@@ -158,4 +206,22 @@ tradingWindowsSelect.addEventListener('change', () => {
 
     currentSubscribedTradingWindow = id;
     connection.invoke('AddTradingWindowSubscription', id);
+});
+
+payoutInput.addEventListener('input', (e) => {
+    const val = e.target.value;
+    if (!numberFormat.test(val)) {
+        return;
+    }
+
+    payout = Number(val);
+    renderBarriers();
+});
+
+barrierContainer.addEventListener('click', (e) => {
+    if (e.target instanceof HTMLButtonElement) {
+        const { barrierNumber, prediction } = e.target.dataset;
+
+        connection.invoke('PlaceTradingWindowBet', tradingWindowsSelect.value, prediction, Number(barrierNumber), payout);
+    }
 });

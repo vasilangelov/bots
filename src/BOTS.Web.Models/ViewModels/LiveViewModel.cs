@@ -1,4 +1,4 @@
-﻿namespace BOTS.Web.Models
+﻿namespace BOTS.Web.Models.ViewModels
 {
     public class LiveViewModel
     {

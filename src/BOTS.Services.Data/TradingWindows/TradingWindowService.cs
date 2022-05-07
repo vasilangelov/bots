@@ -2,7 +2,6 @@
 {
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
-    using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Caching.Memory;
 
     using BOTS.Services.Data.CurrencyPairs;
@@ -42,10 +41,64 @@
 
         public async Task<T> GetTradingWindowAsync<T>(string tradingWindowId, CancellationToken cancellationToken = default)
             => await this.tradingWindowRepository
-                                .AllAsNotracking()
-                                .Where(x => x.Id == tradingWindowId)
-                                .ProjectTo<T>(this.mapper.ConfigurationProvider)
-                                .FirstAsync(cancellationToken);
+                         .AllAsNotracking()
+                         .Where(x => x.Id == tradingWindowId)
+                         .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                         .FirstAsync(cancellationToken);
+
+        public async Task<int?> GetCurrencyPairIdAsync(string tradingWindowId)
+            => await this.tradingWindowRepository
+                         .AllAsNotracking()
+                         .Where(x => x.Id == tradingWindowId)
+                         .Select(x => x.CurrencyPairId)
+                         .FirstOrDefaultAsync();
+
+        public async Task<decimal> GetEntryPercentageAsync(
+            string tradingWindowId,
+            BetType betType,
+            byte barrierIndex)
+        {
+            var window = await this.tradingWindowRepository
+                 .AllAsNotracking()
+                 .Where(x => x.Id == tradingWindowId)
+                 .Select(x => new
+                 {
+                     x.CurrencyPairId,
+                     x.Option.BarrierCount,
+                     x.Option.BarrierStep,
+                     x.OpeningPrice,
+                     RemainingTime = (int)x.End.Subtract(DateTime.UtcNow).TotalSeconds,
+                     FullTime = (int)x.End.Subtract(x.Start).TotalSeconds
+                 })
+                 .FirstOrDefaultAsync();
+
+            if (window is null)
+            {
+                throw new InvalidOperationException("Trading window does not exist");
+            }
+
+            var currencyRate = await this.currencyPairService.GetCurrencyRateAsync(window.CurrencyPairId);
+
+            var barrier = this.CalculateBarrier(barrierIndex, window.BarrierCount, window.OpeningPrice, window.BarrierStep);
+
+            var barrierDistance = betType switch
+            {
+                BetType.Higher => currencyRate - barrier,
+                BetType.Lower => barrier - currencyRate,
+                _ => throw new InvalidOperationException("Invalid bet type")
+            };
+
+            decimal delta = window.BarrierCount * window.BarrierStep;
+
+            return barrierDistance / delta + 0.5m * (2 - window.RemainingTime / (decimal)window.FullTime);
+        }
+
+        public decimal CalculateBarrier(
+            byte barrierIndex,
+            int barrierCount,
+            decimal openingPrice,
+            decimal barrierStep)
+            => openingPrice + (barrierIndex - barrierCount / 2) * barrierStep;
 
         public async Task<bool> IsTradingWindowActiveAsync(string tradingWindowId, CancellationToken cancellationToken = default)
             => await this.tradingWindowRepository
@@ -133,6 +186,5 @@
             this.tradingWindowRepository.Update(tradingWindow);
             await this.tradingWindowRepository.SaveChangesAsync();
         }
-
     }
 }

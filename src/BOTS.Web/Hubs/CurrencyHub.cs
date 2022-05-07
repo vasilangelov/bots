@@ -3,12 +3,16 @@
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.SignalR;
     using System.Threading.Tasks;
+    using System.Security.Claims;
 
     using BOTS.Services.Data.CurrencyPairs;
     using BOTS.Services.Data.TradingWindows;
-    using BOTS.Web.Models;
     using BOTS.Services.Currencies;
     using BOTS.Common;
+    using BOTS.Services.Data.Bets;
+    using BOTS.Data.Models;
+    using BOTS.Web.Models.ViewModels;
+    using BOTS.Services.Data.Users;
 
     [Authorize]
     public class CurrencyHub : Hub
@@ -84,6 +88,58 @@
         public async Task RemoveTradingWindowSubscription(string tradingWindowId)
         {
             await this.Groups.RemoveFromGroupAsync(this.Context.ConnectionId, tradingWindowId);
+        }
+
+        public async Task PlaceTradingWindowBet(
+            // TODO: input model...
+            string tradingWindowId,
+            BetType betType,
+            byte barrierNumber,
+            decimal payout)
+        {
+            // TODO: extract to extension method...
+            var userId = this.Context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId is null)
+            {
+                // TODO: display error message...
+                return;
+            }
+
+            using var scope = this.serviceProvider.CreateScope();
+
+
+            var betService = scope.ServiceProvider.GetRequiredService<IBetService>();
+
+            var betViewModel = await betService.PlaceBetAsync<BetViewModel>(userId, betType, tradingWindowId, barrierNumber, payout);
+
+            await this.Clients.Caller.SendAsync("DisplayBet", betViewModel);
+
+            var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+
+            decimal balance = await userService.GetUserBalance(userId);
+
+            await this.Clients.Caller.SendAsync("UpdateBalance", balance);
+        }
+
+        public async Task GetActiveBets()
+        {
+            // TODO: extract to extension method...
+            var userId = this.Context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId is null)
+            {
+                // TODO: display error message
+                return;
+            }
+
+            using var scope = this.serviceProvider.CreateScope();
+
+            var betService = scope.ServiceProvider.GetRequiredService<IBetService>();
+
+            var model = await betService.GetActiveBetsAsync<BetViewModel>(userId);
+
+            await this.Clients.Caller.SendAsync("SetActiveBets", model);
         }
 
         public async Task GetActiveTradingWindows(int currencyPairId)

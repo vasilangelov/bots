@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BOTS.Data.Models\BOTS.Data.Models.csproj" />
+    <ProjectReference Include="..\BOTS.Services.Mapping\BOTS.Services.Mapping.csproj" />
+    <ProjectReference Include="..\BOTS.Services\BOTS.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="InputModels\" />
+  </ItemGroup>
+
+</Project>

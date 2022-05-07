@@ -6,7 +6,7 @@
     using BOTS.Services.Data.CurrencyPairs;
     using BOTS.Services.Data.TradingWindows;
     using BOTS.Web.Hubs;
-    using BOTS.Web.Models;
+    using BOTS.Web.Models.ViewModels;
 
     public class TradingWindowBackgroundService : BackgroundService
     {
@@ -48,13 +48,15 @@
                         {
                             decimal fullTime = (int)tradingWindow.End.Subtract(tradingWindow.Start).TotalSeconds;
                             decimal remaining = (int)tradingWindow.End.Subtract(now).TotalSeconds;
-                            var delta = tradingWindow.OptionBarrierCount * tradingWindow.OptionBarrierStep;
+                            decimal delta = tradingWindow.OptionBarrierCount * tradingWindow.OptionBarrierStep;
 
-                            int lower = tradingWindow.OptionBarrierCount / 2;
-
-                            var model = Enumerable.Range(0, tradingWindow.OptionBarrierCount).Select(x =>
+                            var model = Enumerable.Range(0, tradingWindow.OptionBarrierCount).Select(i =>
                             {
-                                var barrier = tradingWindow.OpeningPrice + (x - lower) * tradingWindow.OptionBarrierStep;
+                                var barrier = tradingWindowService.CalculateBarrier(
+                                    (byte)i,
+                                    tradingWindow.OptionBarrierCount,
+                                    tradingWindow.OpeningPrice,
+                                    tradingWindow.OptionBarrierStep);
 
                                 decimal high = (currencyRate - barrier) / delta + 0.5m * (2 - remaining / fullTime);
                                 decimal low = (barrier - currencyRate) / delta + 0.5m * (2 - remaining / fullTime);

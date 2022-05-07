@@ -3,7 +3,7 @@
     using Microsoft.AspNetCore.Mvc;
     using System.Diagnostics;
 
-    using Models;
+    using BOTS.Web.Models.ViewModels;
 
     public class HomeController : Controller
     {

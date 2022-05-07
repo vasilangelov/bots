@@ -3,7 +3,7 @@
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
 
-    using BOTS.Web.Models;
+    using BOTS.Web.Models.ViewModels;
     using BOTS.Services.Data.CurrencyPairs;
 
     [Authorize]
@@ -20,7 +20,8 @@
         {
             var model = new LiveViewModel
             {
-                CurrencyPairs = await this.currencyPairService.GetActiveCurrencyPairsAsync<CurrencyPairViewModel>()
+                CurrencyPairs = await this.currencyPairService
+                                          .GetActiveCurrencyPairsAsync<CurrencyPairViewModel>(),
             };
 
             return this.View(model);

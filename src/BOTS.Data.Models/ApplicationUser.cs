@@ -11,5 +11,7 @@
         public int NationalityId { get; set; }
 
         public virtual Nationality Nationality { get; set; } = default!;
+
+        public virtual IEnumerable<Bet> Bets { get; set; } = default!;
     }
 }

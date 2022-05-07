@@ -96,7 +96,9 @@ connection.on('SetCurrencyRateHistory', (histories) => {
 });
 
 connection.on('AddCurrencyRateHistory', ({ time, open, low, high, close }) => {
-    timeRange = timeRange.map(x => new Date(Date.fromPlotlyFormat(x).getTime() + xPeriod).toPlotlyFormat());
+    try {
+        timeRange = timeRange.map(x => new Date(Date.fromPlotlyFormat(x).getTime() + xPeriod).toPlotlyFormat());
+    } catch { }
 
     Plotly.extendTraces(
         'chart',
