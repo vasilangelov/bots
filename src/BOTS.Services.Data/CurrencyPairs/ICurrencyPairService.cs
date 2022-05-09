@@ -2,16 +2,18 @@
 {
     public interface ICurrencyPairService
     {
-        Task<decimal> GetCurrencyRateAsync(int currencyPairId, CancellationToken cancellationToken = default);
+        Task<decimal> GetCurrencyRateAsync(int currencyPairId);
 
-        Task<bool> IsCurrencyPairActiveAsync(int currencyPairId, CancellationToken cancellationToken = default);
+        Task<decimal> GetPastCurrencyRateAsync(int currencyPairId, DateTime dateTime);
 
-        Task<(string, string)> GetCurrencyPairNamesAsync(int currencyPairId, CancellationToken cancellationToken = default);
+        Task<bool> IsCurrencyPairActiveAsync(int currencyPairId);
 
-        Task<IEnumerable<T>> GetActiveCurrencyPairsAsync<T>(CancellationToken cancellationToken = default);
+        Task<(string, string)> GetCurrencyPairNamesAsync(int currencyPairId);
 
-        Task<IEnumerable<int>> GetActiveCurrencyPairIdsAsync(CancellationToken cancellationToken = default);
+        Task<IEnumerable<T>> GetActiveCurrencyPairsAsync<T>();
 
-        Task<IEnumerable<(string, string)>> GetAllActiveCurrencyPairNamesAsync(CancellationToken cancellationToken = default);
+        Task<IEnumerable<int>> GetActiveCurrencyPairIdsAsync();
+
+        Task<IEnumerable<(string, string)>> GetAllActiveCurrencyPairNamesAsync();
     }
 }

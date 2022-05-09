@@ -4,6 +4,6 @@
     {
         void UpdateCurrencyRates();
 
-        Task SeedInitialCurrencyRatesAsync(IEnumerable<(string, string)> currencyPairs, CancellationToken cancellationToken = default);
+        Task SeedInitialCurrencyRatesAsync(IEnumerable<(string, string)> currencyPairs);
     }
 }

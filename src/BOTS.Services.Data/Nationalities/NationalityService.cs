@@ -15,15 +15,15 @@
             this.mapper = mapper;
         }
 
-        public async Task<IEnumerable<T>> GetAllNationalitiesAsync<T>(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<T>> GetAllNationalitiesAsync<T>()
             => await this.nationalityRepository
                         .AllAsNotracking()
                         .ProjectTo<T>(this.mapper.ConfigurationProvider)
-                        .ToArrayAsync(cancellationToken);
+                        .ToArrayAsync();
 
-        public async Task<bool> NationalityExistsAsync(int nationalityId, CancellationToken cancellationToken = default)
+        public async Task<bool> NationalityExistsAsync(int nationalityId)
             => await this.nationalityRepository
                         .AllAsNotracking()
-                        .AnyAsync(x => x.Id == nationalityId, cancellationToken);
+                        .AnyAsync(x => x.Id == nationalityId);
     }
 }

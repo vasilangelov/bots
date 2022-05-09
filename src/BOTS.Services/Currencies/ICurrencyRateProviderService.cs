@@ -4,7 +4,11 @@
     {
         Task<decimal> GetCurrencyRateAsync(
             string fromCurrency,
+            string toCurrency);
+
+        Task<decimal> GetPastCurrencyRateAsync(
+            string fromCurrency,
             string toCurrency,
-            CancellationToken cancellationToken = default);
+            DateTime dateTime);
     }
 }

@@ -12,8 +12,4 @@
     <ProjectReference Include="..\BOTS.Services\BOTS.Services.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="InputModels\" />
-  </ItemGroup>
-
 </Project>

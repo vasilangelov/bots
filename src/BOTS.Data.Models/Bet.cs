@@ -23,7 +23,7 @@
         [Column(TypeName = "money")]
         public decimal EntryFee { get; set; }
 
-        public int BarrierIndex { get; set; }
+        public byte BarrierIndex { get; set; }
 
         public string TradingWindowId { get; set; } = default!;
 

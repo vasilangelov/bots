@@ -28,11 +28,11 @@
                     var currencyPairService = scope.ServiceProvider.GetRequiredService<ICurrencyPairService>();
 
                     // TODO: maybe some kind of caching...
-                    var currencyPairIds = await currencyPairService.GetActiveCurrencyPairIdsAsync(cancellationToken);
+                    var currencyPairIds = await currencyPairService.GetActiveCurrencyPairIdsAsync();
 
                     foreach (var currencyPairId in currencyPairIds)
                     {
-                        decimal currencyRate = await currencyPairService.GetCurrencyRateAsync(currencyPairId, cancellationToken);
+                        decimal currencyRate = await currencyPairService.GetCurrencyRateAsync(currencyPairId);
 
                         await this.currencyHub.Clients
                                     .Group(currencyPairId.ToString())

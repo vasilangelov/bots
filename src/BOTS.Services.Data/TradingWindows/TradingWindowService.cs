@@ -6,22 +6,29 @@
 
     using BOTS.Services.Data.CurrencyPairs;
     using BOTS.Services.Models;
+    using BOTS.Services.Infrastructure.Extensions;
+    using BOTS.Services.Data.Users;
 
     public class TradingWindowService : ITradingWindowService
     {
+        private static readonly object tradingWindowsKey = new();
+
         private readonly IRepository<TradingWindow> tradingWindowRepository;
+        private readonly IUserService userService;
         private readonly ICurrencyPairService currencyPairService;
         private readonly ITradingWindowOptionService tradingWindowOptionService;
         private readonly IMapper mapper;
         private readonly IMemoryCache memoryCache;
 
         public TradingWindowService(IRepository<TradingWindow> tradingWindowRepository,
+                                    IUserService userService,
                                     ICurrencyPairService currencyPairService,
                                     ITradingWindowOptionService tradingWindowOptionService,
                                     IMapper mapper,
                                     IMemoryCache memoryCache)
         {
             this.tradingWindowRepository = tradingWindowRepository;
+            this.userService = userService;
             this.currencyPairService = currencyPairService;
             this.tradingWindowOptionService = tradingWindowOptionService;
             this.mapper = mapper;
@@ -29,22 +36,21 @@
         }
 
         public async Task<IEnumerable<T>> GetActiveTradingWindowsByCurrencyPairAsync<T>(
-            int currencyPairId,
-            CancellationToken cancellationToken = default)
+            int currencyPairId)
             => await this.tradingWindowRepository
                         .AllAsNotracking()
                         .Where(x => x.CurrencyPairId == currencyPairId &&
                                     x.End > DateTime.UtcNow)
                         .OrderBy(x => x.Option.Duration)
                         .ProjectTo<T>(this.mapper.ConfigurationProvider)
-                        .ToArrayAsync(cancellationToken);
+                        .ToArrayAsync();
 
-        public async Task<T> GetTradingWindowAsync<T>(string tradingWindowId, CancellationToken cancellationToken = default)
+        public async Task<T> GetTradingWindowAsync<T>(string tradingWindowId)
             => await this.tradingWindowRepository
                          .AllAsNotracking()
                          .Where(x => x.Id == tradingWindowId)
                          .ProjectTo<T>(this.mapper.ConfigurationProvider)
-                         .FirstAsync(cancellationToken);
+                         .FirstAsync();
 
         public async Task<int?> GetCurrencyPairIdAsync(string tradingWindowId)
             => await this.tradingWindowRepository
@@ -100,69 +106,121 @@
             decimal barrierStep)
             => openingPrice + (barrierIndex - barrierCount / 2) * barrierStep;
 
-        public async Task<bool> IsTradingWindowActiveAsync(string tradingWindowId, CancellationToken cancellationToken = default)
+        public async Task<bool> IsTradingWindowActiveAsync(string tradingWindowId)
             => await this.tradingWindowRepository
                         .AllAsNotracking()
-                        .AnyAsync(x => x.Id == tradingWindowId && x.End > DateTime.UtcNow, cancellationToken);
+                        .AnyAsync(x => x.Id == tradingWindowId && x.End > DateTime.UtcNow);
 
-        public async Task EnsureAllTradingWindowsActiveAsync(
-            IEnumerable<int> currencyPairIds,
-            CancellationToken cancellationToken = default)
+        public async Task EnsureAllTradingWindowsActiveAsync(IEnumerable<int> currencyPairIds)
         {
-            bool areTradingWindowsLoaded = this.memoryCache.TryGetValue("TradingWindows", out ICollection<TradingWindow> tradingWindows);
+            ICollection<TradingWindow> tradingWindows = this.memoryCache.GetOrAdd(
+                tradingWindowsKey,
+                this.GetActiveTradingWindows);
 
-            if (!areTradingWindowsLoaded)
-            {
-                tradingWindows = await this.tradingWindowRepository
-                                    .AllAsNotracking()
-                                    .Where(x => x.End > DateTime.UtcNow)
-                                    .ToListAsync(cancellationToken);
-            }
+            var tradingWindowOptions = await this.tradingWindowOptionService
+                    .GetAllTradingWindowOptionsAsync<TradingWindowOptionInfo>();
 
-            var tradingWindowOptions = await this.tradingWindowOptionService.GetAllTradingWindowOptionsAsync<TradingWindowOptionInfo>(cancellationToken);
-
-            var endedTradingWindows = tradingWindows.Where(x => x.End <= DateTime.UtcNow).ToArray();
+            var endedTradingWindows = tradingWindows
+                                        .Where(x => DateTime.UtcNow >= x.End)
+                                        .ToArray();
 
             foreach (var tradingWindow in endedTradingWindows)
             {
-                decimal currencyRate = await this.currencyPairService.GetCurrencyRateAsync(tradingWindow.CurrencyPairId, cancellationToken);
-
-                tradingWindow.ClosingPrice = currencyRate;
+                decimal currencyRate = await this.currencyPairService.GetCurrencyRateAsync(tradingWindow.CurrencyPairId);
 
                 tradingWindows.Remove(tradingWindow);
 
-                await this.UpdateTradingWindowAsync(tradingWindow);
+                await this.UpdateTradingWindowClosingPriceAsync(tradingWindow, currencyRate);
             }
+
+            // TODO: bulk save changes???
+            await this.tradingWindowRepository.SaveChangesAsync();
 
             foreach (var currencyPairId in currencyPairIds)
             {
                 foreach (var tradingWindowOption in tradingWindowOptions)
                 {
-                    bool isTradingWindowActive = tradingWindows.Any(x => x.CurrencyPairId == currencyPairId && x.OptionId == tradingWindowOption.Id);
+                    bool hasActiveTradingWindow = tradingWindows
+                                                    .Any(x => x.CurrencyPairId == currencyPairId &&
+                                                              x.OptionId == tradingWindowOption.Id);
 
-                    if (!isTradingWindowActive)
+                    if (!hasActiveTradingWindow)
                     {
                         var tradingWindow = await this.CreateTradingWindowAsync(
                                                             currencyPairId,
                                                             tradingWindowOption.Id,
-                                                            tradingWindowOption.Duration,
-                                                            cancellationToken);
+                                                            tradingWindowOption.Duration);
 
                         tradingWindows.Add(tradingWindow);
                     }
                 }
             }
-
-            this.memoryCache.Set("TradingWindows", tradingWindows);
         }
 
-        private async Task<TradingWindow> CreateTradingWindowAsync(int currencyPairId,
-                                                    int tradingWindowOptionId,
-                                                    TimeSpan duration,
-                                                    CancellationToken cancellationToken = default)
+        public async Task UpdateEndedTradingWindowsAsync()
         {
-            var openingPrice = await this.currencyPairService
-                                        .GetCurrencyRateAsync(currencyPairId, cancellationToken);
+            var unsetEndedTradingWindows = await this.GetUnsetEndedTradingWindowsAsync();
+
+            foreach (var tradingWindow in unsetEndedTradingWindows)
+            {
+                decimal currencyRate = await this.currencyPairService.GetPastCurrencyRateAsync(tradingWindow.CurrencyPairId, tradingWindow.End);
+
+                await this.UpdateTradingWindowClosingPriceAsync(tradingWindow, currencyRate);
+            }
+
+            await this.tradingWindowRepository.SaveChangesAsync();
+        }
+
+        private async Task UpdateTradingWindowClosingPriceAsync(TradingWindow tradingWindow, decimal closingPrice)
+        {
+            // TODO: IMPORTANT! calculate circulating money...
+            tradingWindow.ClosingPrice = closingPrice;
+
+            this.tradingWindowRepository.Update(tradingWindow);
+
+            await this.UpdateWinningBetsAsync(tradingWindow.Id);
+        }
+
+        private async Task UpdateWinningBetsAsync(string tradingWindowId)
+        {
+            var bets = await this.GetWinningBetsAsync(tradingWindowId);
+
+            foreach (var bet in bets)
+            {
+                await this.userService.AddToBalanceAsync(bet.UserId, bet.Payout);
+            }
+        }
+
+        private async Task<IEnumerable<Bet>> GetWinningBetsAsync(string tradingWindowId)
+            => await this.tradingWindowRepository
+                    .AllAsNotracking()
+                    .Where(x => x.Id == tradingWindowId)
+                    .SelectMany(x => x.Bets
+                        .Where(y =>
+                            (y.Type == BetType.Higher &&
+                             y.TradingWindow.OpeningPrice + (y.BarrierIndex - y.TradingWindow.Option.BarrierCount / 2) * y.TradingWindow.Option.BarrierStep <= y.TradingWindow.ClosingPrice) ||
+                            (y.Type == BetType.Lower && y.TradingWindow.OpeningPrice + (y.BarrierIndex - y.TradingWindow.Option.BarrierCount / 2) * y.TradingWindow.Option.BarrierStep > y.TradingWindow.ClosingPrice)))
+                    .ToArrayAsync();
+
+        private async Task<IEnumerable<TradingWindow>> GetUnsetEndedTradingWindowsAsync()
+            => await this.tradingWindowRepository
+                            .AllAsNotracking()
+                            .Where(x => DateTime.UtcNow >= x.End &&
+                                        !x.ClosingPrice.HasValue)
+                            .ToArrayAsync();
+
+        private ICollection<TradingWindow> GetActiveTradingWindows()
+            => this.tradingWindowRepository
+                        .AllAsNotracking()
+                        .Where(x => DateTime.UtcNow < x.End)
+                        .ToHashSet();
+
+        private async Task<TradingWindow> CreateTradingWindowAsync(
+            int currencyPairId,
+            int tradingWindowOptionId,
+            TimeSpan duration)
+        {
+            var openingPrice = await this.currencyPairService.GetCurrencyRateAsync(currencyPairId);
 
             var start = DateTime.UtcNow;
 
@@ -179,12 +237,6 @@
             await this.tradingWindowRepository.SaveChangesAsync();
 
             return model;
-        }
-
-        private async Task UpdateTradingWindowAsync(TradingWindow tradingWindow)
-        {
-            this.tradingWindowRepository.Update(tradingWindow);
-            await this.tradingWindowRepository.SaveChangesAsync();
         }
     }
 }

@@ -35,7 +35,7 @@
                 {
                     var currencyPairService = scope.ServiceProvider.GetRequiredService<ICurrencyPairService>();
 
-                    var currencyPairs = await currencyPairService.GetActiveCurrencyPairsAsync<CurrencyPairViewModel>(cancellationToken);
+                    var currencyPairs = await currencyPairService.GetActiveCurrencyPairsAsync<CurrencyPairViewModel>();
 
                     await Parallel.ForEachAsync(
                         currencyPairs,
@@ -44,8 +44,7 @@
                             var model = await this.currencyRateStatProvider
                                 .GetLatestCurrencyRateStatAsync<CurrencyRateHistoryViewModel>(
                                     p.LeftName,
-                                    p.RightName,
-                                    cancellationToken);
+                                    p.RightName);
 
                             await this.hubContext.Clients
                                 .Group(p.Id.ToString())

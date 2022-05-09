@@ -29,43 +29,47 @@
             this.mapper = mapper;
         }
 
-        public async Task<IEnumerable<int>> GetActiveCurrencyPairIdsAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<int>> GetActiveCurrencyPairIdsAsync()
             => await currencyPairRepository
                                 .AllAsNotracking()
                                 .Where(x => x.Display)
                                 .Select(x => x.Id)
-                                .ToArrayAsync(cancellationToken);
+                                .ToArrayAsync();
 
-        public async Task<IEnumerable<(string, string)>> GetAllActiveCurrencyPairNamesAsync(
-            CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<(string, string)>> GetAllActiveCurrencyPairNamesAsync()
             => await this.currencyPairRepository
                                 .AllAsNotracking()
                                 .Where(x => x.Display)
                                 .Select(x => new Tuple<string, string>(x.Left.Name, x.Right.Name).ToValueTuple())
-                                .ToArrayAsync(cancellationToken);
+                                .ToArrayAsync();
 
-        public async Task<IEnumerable<T>> GetActiveCurrencyPairsAsync<T>(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<T>> GetActiveCurrencyPairsAsync<T>()
             => await currencyPairRepository
                                 .AllAsNotracking()
                                 .Where(x => x.Display)
                                 .ProjectTo<T>(mapper.ConfigurationProvider)
-                                .ToArrayAsync(cancellationToken);
+                                .ToArrayAsync();
 
-        public async Task<decimal> GetCurrencyRateAsync(
-            int currencyPairId,
-            CancellationToken cancellationToken = default)
+        public async Task<decimal> GetCurrencyRateAsync(int currencyPairId)
         {
-            var (fromCurrency, toCurrency) = await this.GetCurrencyPairNamesAsync(currencyPairId, cancellationToken);
+            var (fromCurrency, toCurrency) = await this.GetCurrencyPairNamesAsync(currencyPairId);
 
-            return await this.currencyRateProviderService.GetCurrencyRateAsync(fromCurrency, toCurrency, cancellationToken);
+            return await this.currencyRateProviderService.GetCurrencyRateAsync(fromCurrency, toCurrency);
         }
 
-        public async Task<bool> IsCurrencyPairActiveAsync(int currencyPairId, CancellationToken cancellationToken = default)
+        public async Task<decimal> GetPastCurrencyRateAsync(int currencyPairId, DateTime dateTime)
+        {
+            var (fromCurrency, toCurrency) = await this.GetCurrencyPairNamesAsync(currencyPairId);
+
+            return await this.currencyRateProviderService.GetPastCurrencyRateAsync(fromCurrency, toCurrency, dateTime);
+        }
+
+        public async Task<bool> IsCurrencyPairActiveAsync(int currencyPairId)
             => await currencyPairRepository
                                 .AllAsNotracking()
-                                .AnyAsync(x => x.Id == currencyPairId && x.Display, cancellationToken);
+                                .AnyAsync(x => x.Id == currencyPairId && x.Display);
 
-        public async Task<(string, string)> GetCurrencyPairNamesAsync(int currencyPairId, CancellationToken cancellationToken = default)
+        public async Task<(string, string)> GetCurrencyPairNamesAsync(int currencyPairId)
         {
             var currencyRateNames = this.memoryCache.GetOrAdd<ConcurrentDictionary<int, (string, string)>>(currencyRateNamesKey, () => new());
 
@@ -74,8 +78,10 @@
                 var (from, to) = await this.currencyPairRepository
                                 .AllAsNotracking()
                                 .Where(x => x.Id == currencyPairId)
-                                .Select(x => new Tuple<string, string>(x.Left.Name, x.Right.Name).ToValueTuple())
-                                .FirstAsync(cancellationToken);
+                                .Select(x =>
+                                    new Tuple<string, string>(x.Left.Name, x.Right.Name)
+                                        .ToValueTuple())
+                                .FirstAsync();
 
                 currencyRateNames.TryAdd(currencyPairId, (from, to));
             }

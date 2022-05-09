@@ -6,8 +6,14 @@
     using BOTS.Services.Currencies.Models;
     using BOTS.Services.Infrastructure.Extensions;
 
+    using static BOTS.Services.Currencies.CurrencyGenerator;
+    using static BOTS.Common.GlobalConstants;
+
     public class CurrencyRateStatGeneratorService : ICurrencyRateStatProviderService
     {
+        private const decimal MaxHighLowOffset = 0.0005m;
+        private const decimal MinHighLowOffset = 0.0001m;
+
         private static readonly ConcurrentDictionary<(string, string), DateTime> lastUpdated = new();
 
         private readonly ICurrencyRateProviderService currencyRateProviderService;
@@ -23,16 +29,15 @@
 
         public async Task<T> GetLatestCurrencyRateStatAsync<T>(
             string fromCurrency,
-            string toCurrency,
-            CancellationToken cancellationToken = default)
+            string toCurrency)
         {
-            var currencyRate = await this.currencyRateProviderService.GetCurrencyRateAsync(fromCurrency, toCurrency, cancellationToken);
+            var currencyRate = await this.currencyRateProviderService.GetCurrencyRateAsync(fromCurrency, toCurrency);
 
             Random rnd = new();
 
-            var openValue = GenerateCurrencyRate(rnd, currencyRate);
-            var highValue = Math.Max(openValue, currencyRate) + rnd.NextDecimal(0.0005m, 0.0001m);
-            var lowValue = Math.Min(openValue, currencyRate) - rnd.NextDecimal(0.0005m, 0.0001m);
+            var openValue = GenerateCurrencyRate(rnd, currencyRate, MinCurrencyRateOffset, MaxCurrencyRateOffset);
+            var highValue = Math.Max(openValue, currencyRate) + rnd.NextDecimal(MaxHighLowOffset, MinHighLowOffset);
+            var lowValue = Math.Min(openValue, currencyRate) - rnd.NextDecimal(MaxHighLowOffset, MinHighLowOffset);
 
             DateTime end = DateTime.UtcNow;
 
@@ -54,8 +59,7 @@
             string fromCurrency,
             string toCurrency,
             DateTime start,
-            TimeSpan interval,
-            CancellationToken cancellationToken = default)
+            TimeSpan interval)
         {
             bool success = lastUpdated.TryGetValue((fromCurrency, toCurrency), out var end);
 
@@ -72,8 +76,7 @@
             string toCurrency,
             DateTime start,
             DateTime end,
-            TimeSpan interval,
-            CancellationToken cancellationToken = default)
+            TimeSpan interval)
         {
             Random rnd = new(0);
 
@@ -87,17 +90,16 @@
                 {
                     lastValue = await this.currencyRateProviderService.GetCurrencyRateAsync(
                         fromCurrency,
-                        toCurrency,
-                        cancellationToken);
+                        toCurrency);
                 }
 
                 decimal openValue = lastValue.Value;
-                decimal closeValue = GenerateCurrencyRate(rnd, openValue);
+                decimal closeValue = GenerateCurrencyRate(rnd, openValue, MinCurrencyRateOffset, MaxCurrencyRateOffset);
 
                 lastValue = closeValue;
 
-                decimal highValue = Math.Max(openValue, closeValue) + rnd.NextDecimal(0.0005m, 0.0001m);
-                decimal lowValue = Math.Min(openValue, closeValue) - rnd.NextDecimal(0.0005m, 0.0001m);
+                decimal highValue = Math.Max(openValue, closeValue) + rnd.NextDecimal(MaxHighLowOffset, MinHighLowOffset);
+                decimal lowValue = Math.Min(openValue, closeValue) - rnd.NextDecimal(MaxHighLowOffset, MinHighLowOffset);
 
                 currencyRateHistory.Push(new CurrencyRateHistory
                 {
@@ -110,18 +112,6 @@
             }
 
             return this.mapper.Map<IEnumerable<T>>(currencyRateHistory);
-        }
-
-        // TODO: merge logic with currencygenerator
-        private const decimal precision = 0.000001m;
-        private const int maxDeltaOffset = 500;
-
-        private static decimal GenerateCurrencyRate(Random rnd, decimal value)
-        {
-            int sign = rnd.Next(-1, 2);
-            decimal delta = rnd.Next(maxDeltaOffset) * precision;
-
-            return value + sign * delta;
         }
     }
 }

@@ -21,18 +21,23 @@
 
         public async Task<decimal> GetCurrencyRateAsync(
             string fromCurrency,
-            string toCurrency,
-            CancellationToken cancellationToken = default)
+            string toCurrency)
         {
-            var queryParams = string.Format(ApiQueryString, fromCurrency, toCurrency, GlobalConstants.DecimalPlaces);
+            var queryParams = string.Format(
+                ApiQueryString,
+                fromCurrency,
+                toCurrency,
+                GlobalConstants.DecimalPlaces);
 
-            CurrencyRateInfo? currencyRateInfo = await httpClient.GetFromJsonAsync<CurrencyRateInfo>(
-                queryParams,
-                cancellationToken);
+            CurrencyRateInfo? currencyRateInfo =
+                await httpClient.GetFromJsonAsync<CurrencyRateInfo>(queryParams);
 
             if (currencyRateInfo is null)
             {
-                throw new InvalidOperationException(string.Format(UnsuccessfulRetrivalExceptionMessage, fromCurrency, toCurrency));
+                throw new InvalidOperationException(string.Format(
+                    UnsuccessfulRetrivalExceptionMessage,
+                    fromCurrency,
+                    toCurrency));
             }
 
             return currencyRateInfo.Rates[toCurrency];
@@ -90,6 +95,14 @@
             }
 
             return currencyRates;
+        }
+
+        public Task<decimal> GetPastCurrencyRateAsync(
+            string fromCurrency,
+            string toCurrency,
+            DateTime dateTime)
+        {
+            throw new NotImplementedException();
         }
     }
 }

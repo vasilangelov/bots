@@ -21,6 +21,18 @@
             this.currencyHub = currencyHub;
         }
 
+        public override async Task StartAsync(CancellationToken cancellationToken)
+        {
+            using (var scope = this.serviceProvider.CreateScope())
+            {
+                var tradingWindowService = scope.ServiceProvider.GetRequiredService<ITradingWindowService>();
+
+                await tradingWindowService.UpdateEndedTradingWindowsAsync();
+            }
+
+            await base.StartAsync(cancellationToken);
+        }
+
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
@@ -29,20 +41,20 @@
                 {
                     var currencyPairService = scope.ServiceProvider.GetRequiredService<ICurrencyPairService>();
 
-                    IEnumerable<int> currencyPairIds = await currencyPairService.GetActiveCurrencyPairIdsAsync(cancellationToken);
+                    IEnumerable<int> currencyPairIds = await currencyPairService.GetActiveCurrencyPairIdsAsync();
 
                     var now = DateTime.UtcNow;
 
                     var tradingWindowService = scope.ServiceProvider.GetRequiredService<ITradingWindowService>();
 
-                    await tradingWindowService.EnsureAllTradingWindowsActiveAsync(currencyPairIds, cancellationToken);
+                    await tradingWindowService.EnsureAllTradingWindowsActiveAsync(currencyPairIds);
 
                     foreach (var currencyPairId in currencyPairIds)
                     {
-                        decimal currencyRate = await currencyPairService.GetCurrencyRateAsync(currencyPairId, cancellationToken);
+                        decimal currencyRate = await currencyPairService.GetCurrencyRateAsync(currencyPairId);
 
                         // TODO: reduce number of db requests...
-                        var tradingWindows = await tradingWindowService.GetActiveTradingWindowsByCurrencyPairAsync<TradingWindowViewModel>(currencyPairId, cancellationToken);
+                        var tradingWindows = await tradingWindowService.GetActiveTradingWindowsByCurrencyPairAsync<TradingWindowViewModel>(currencyPairId);
 
                         foreach (var tradingWindow in tradingWindows)
                         {
