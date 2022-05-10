@@ -6,6 +6,7 @@
 
         public string Name { get; set; } = default!;
 
-        public virtual ICollection<ApplicationUser> Users { get; set; } = new HashSet<ApplicationUser>();
+        public virtual ICollection<ApplicationUser> Users { get; set; }
+            = new HashSet<ApplicationUser>();
     }
 }

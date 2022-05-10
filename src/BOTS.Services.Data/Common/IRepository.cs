@@ -1,5 +1,7 @@
 ﻿namespace BOTS.Services.Data.Common
 {
+    using Microsoft.EntityFrameworkCore.ChangeTracking;
+
     public interface IRepository<T>
         where T : class
     {
@@ -9,7 +11,7 @@
 
         Task AddAsync(T item);
 
-        void Update(T item);
+        public EntityEntry<T> Update(T item);
 
         void Remove(T item);
 

@@ -29,6 +29,7 @@
 
         public DateTime End { get; set; }
 
-        public virtual IEnumerable<Bet> Bets { get; set; } = new HashSet<Bet>();
+        public virtual ICollection<Bet> Bets { get; set; }
+            = new HashSet<Bet>();
     }
 }

@@ -17,6 +17,7 @@ using BOTS.Services.Currencies;
 using BOTS.Services.Data.Bets;
 using BOTS.Services.Data.Users;
 using BOTS.Web.Models.ViewModels;
+using BOTS.Services.Data.UserPresets;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,6 +74,7 @@ builder.Services.AddTransient<ITradingWindowService, TradingWindowService>();
 builder.Services.AddTransient<ITradingWindowOptionService, TradingWindowOptionService>();
 builder.Services.AddTransient<IBetService, BetService>();
 builder.Services.AddTransient<IUserService, UserService>();
+builder.Services.AddTransient<IUserPresetService, UserPresetService>();
 builder.Services.AddTransient<ThirdPartyCurrencyRateProviderService>();
 
 builder.Services.AddSingleton<ICurrencyRateProviderService, CurrencyGeneratorService>();

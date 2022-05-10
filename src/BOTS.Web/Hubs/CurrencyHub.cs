@@ -13,6 +13,7 @@
     using BOTS.Data.Models;
     using BOTS.Web.Models.ViewModels;
     using BOTS.Services.Data.Users;
+    using BOTS.Web.Extensions;
 
     [Authorize]
     public class CurrencyHub : Hub
@@ -97,8 +98,7 @@
             byte barrierNumber,
             decimal payout)
         {
-            // TODO: extract to extension method...
-            var userId = this.Context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = this.Context.User?.GetUserId();
 
             if (userId is null)
             {
@@ -124,8 +124,7 @@
 
         public async Task GetActiveBets()
         {
-            // TODO: extract to extension method...
-            var userId = this.Context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = this.Context.User?.GetUserId();
 
             if (userId is null)
             {

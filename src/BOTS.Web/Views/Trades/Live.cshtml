@@ -21,12 +21,8 @@
                 <div class="row">
                     <div class="col-sm-6 text-center">
                         <h5>Currency pair</h5>
-                        <select id="currencyPair" class="form-select">
-                            @foreach (var currencyPair in Model.CurrencyPairs)
-                            {
-                                <option value="@currencyPair.Id">@currencyPair.LeftName/@currencyPair.RightName</option>
-                            }
-                        </select>
+                        <select id="currencyPair" class="form-select"
+                                asp-items="this.Model.CurrencyPairs"></select>
                     </div>
                     <div class="col-sm-6 text-center">
                         <h5>Currency rate: </h5>

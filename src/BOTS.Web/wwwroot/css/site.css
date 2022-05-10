@@ -17,6 +17,21 @@ body {
     margin-bottom: 60px;
 }
 
+.text-left {
+    text-align: left;
+}
+
 .text-right {
     text-align: right;
+}
+
+form > :not(.validation-summary-valid) {
+    padding: .5rem 0;
+}
+
+.dropdown-toggle::after {
+    right: 1rem;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
 }

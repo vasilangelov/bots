@@ -12,6 +12,10 @@
 
         public virtual Nationality Nationality { get; set; } = default!;
 
-        public virtual IEnumerable<Bet> Bets { get; set; } = default!;
+        public virtual ICollection<Bet> Bets { get; set; }
+            = new HashSet<Bet>();
+
+        public virtual ICollection<UserPreset> Presets { get; set; }
+            = new HashSet<UserPreset>();
     }
 }

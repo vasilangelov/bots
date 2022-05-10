@@ -1,6 +1,7 @@
 ﻿namespace BOTS.Services.Data.Common
 {
     using Microsoft.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore.ChangeTracking;
     using System.Linq;
     using System.Threading.Tasks;
 
@@ -27,7 +28,7 @@
         public async Task AddAsync(T item)
             => await this.dbSet.AddAsync(item);
 
-        public void Update(T item)
+        public EntityEntry<T> Update(T item)
             => this.dbSet.Update(item);
 
         public void Remove(T item)

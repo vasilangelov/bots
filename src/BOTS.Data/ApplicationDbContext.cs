@@ -17,6 +17,8 @@
 
         public DbSet<TradingWindowOption> TradingWindowOptions { get; set; } = default!;
 
+        public DbSet<UserPreset> UserPresets { get; set; } = default!;
+
         public DbSet<Bet> Bets { get; set; } = default!;
 
         public ApplicationDbContext(DbContextOptions options)

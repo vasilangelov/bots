@@ -2,6 +2,6 @@
 {
     public class LiveViewModel
     {
-        public IEnumerable<CurrencyPairViewModel> CurrencyPairs { get; set; } = default!;
+        public IEnumerable<CurrencyPairSelectViewModel> CurrencyPairs { get; set; } = default!;
     }
 }

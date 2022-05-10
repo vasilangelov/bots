@@ -8,7 +8,9 @@
     {
         private const string ModelCreationExceptionMessage = "Cannot create instance of type {0}. It should have a parameterless constructor";
 
-        public static void AddAutoMapper(this IServiceCollection serviceCollection, params Assembly[] assembliesToScan)
+        public static void AddAutoMapper(
+            this IServiceCollection serviceCollection,
+            params Assembly[] assembliesToScan)
         {
             serviceCollection.AddSingleton(sp => AutoMapperFactory(assembliesToScan));
         }
@@ -21,7 +23,7 @@
 
             foreach (var assembly in assembliesToScan)
             {
-                var mappingInfos = assembly
+                var mappingFromInfos = assembly
                     .GetTypes()
                     .SelectMany(t => t.GetInterfaces()
                                       .Where(i => i.IsGenericType &&
@@ -30,7 +32,21 @@
                                       .ToArray())
                     .ToArray();
 
-                foreach (var mappingInfo in mappingInfos)
+                foreach (var mappingInfo in mappingFromInfos)
+                {
+                    configurationExpression.CreateMap(mappingInfo.From, mappingInfo.To);
+                }
+
+                var mappingToInfos = assembly
+                    .GetTypes()
+                    .SelectMany(t => t.GetInterfaces()
+                                      .Where(i => i.IsGenericType &&
+                                                  i.GetGenericTypeDefinition() == typeof(IMapTo<>))
+                                      .Select(i => new MappingInfo(t, i.GenericTypeArguments[0]))
+                                      .ToArray())
+                    .ToArray();
+
+                foreach (var mappingInfo in mappingToInfos)
                 {
                     configurationExpression.CreateMap(mappingInfo.From, mappingInfo.To);
                 }

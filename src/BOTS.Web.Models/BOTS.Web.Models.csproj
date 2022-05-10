@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.ViewFeatures" Version="2.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\BOTS.Data.Models\BOTS.Data.Models.csproj" />
     <ProjectReference Include="..\BOTS.Services.Mapping\BOTS.Services.Mapping.csproj" />
     <ProjectReference Include="..\BOTS.Services\BOTS.Services.csproj" />

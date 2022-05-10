@@ -31,6 +31,12 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3">
+            @if (this.TempData["Error"] != null)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @this.TempData["Error"]
+                </div>
+            }
             @RenderBody()
         </main>
     </div>
