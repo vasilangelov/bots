@@ -2,16 +2,22 @@
 {
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
+    using BOTS.Services.Data.ApplicationSettings;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.Extensions.DependencyInjection;
 
     public class UserPresetService : IUserPresetService
     {
+        private readonly IHttpContextAccessor httpContextAccessor;
         private readonly IRepository<UserPreset> userPresetRepository;
         private readonly IMapper mapper;
 
         public UserPresetService(
+            IHttpContextAccessor httpContextAccessor,
             IRepository<UserPreset> userPresetRepository,
             IMapper mapper)
         {
+            this.httpContextAccessor = httpContextAccessor;
             this.userPresetRepository = userPresetRepository;
             this.mapper = mapper;
         }
@@ -155,6 +161,23 @@
             this.userPresetRepository.Remove(preset);
 
             await this.userPresetRepository.SaveChangesAsync();
+        }
+
+        public async Task<T> GetActiveUserPresetOrDefaultAsync<T>(string userId)
+        {
+            UserPreset? userPreset = await this.GetActiveUserPresetAsync(userId);
+
+            if (userPreset is null)
+            {
+                var settingService = this.httpContextAccessor
+                                            .HttpContext
+                                            .RequestServices
+                                            .GetRequiredService<IApplicationSettingService>();
+
+                userPreset = await settingService.GetValue<UserPreset>("DefaultUserPreset");
+            }
+
+            return this.mapper.Map<T>(userPreset);
         }
 
         private async Task<bool> UserHasActivePresetAsync(string userId)

@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -16,6 +15,7 @@ using System.Text.Encodings.Web;
 using BOTS.Data.Models;
 using BOTS.Services;
 using BOTS.Services.Data.Nationalities;
+using BOTS.Services.Data.ApplicationSettings;
 using BOTS.Web.Models.ViewModels;
 
 namespace BOTS.Web.Areas.Identity.Pages.Account
@@ -29,7 +29,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly INationalityService _nationalityService;
-        private readonly ApplicationUserOptions _applicationUserOptions;
+        private readonly IApplicationSettingService _applicationSettingService;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
@@ -38,7 +38,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
             INationalityService nationalityService,
-            IOptions<ApplicationUserOptions> applicationUserOptions)
+            IApplicationSettingService applicationSettingService)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -47,7 +47,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             _logger = logger;
             _emailSender = emailSender;
             _nationalityService = nationalityService;
-            _applicationUserOptions = applicationUserOptions.Value;
+            _applicationSettingService = applicationSettingService;
         }
 
         public IEnumerable<NationalityViewModel> Nationalities { get; set; }
@@ -143,7 +143,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
 
                 var user = CreateUser();
 
-                user.Balance = _applicationUserOptions.InitialBalance;
+                user.Balance = await this._applicationSettingService.GetValue<decimal>("InitialBalance");
                 user.NationalityId = Input.NationalityId;
 
                 await _userStore.SetUserNameAsync(user, Input.Username, CancellationToken.None);

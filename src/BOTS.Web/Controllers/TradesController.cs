@@ -25,10 +25,13 @@
 
         public async Task<IActionResult> Live()
         {
+            var userId = this.User.GetUserId();
+
             var model = new LiveViewModel
             {
                 CurrencyPairs = await this.currencyPairService
                                           .GetActiveCurrencyPairsAsync<CurrencyPairSelectViewModel>(),
+                Preset = await this.userPresetService.GetActiveUserPresetOrDefaultAsync<DisplayUserPresetViewModel>(userId)
             };
 
             return this.View(model);

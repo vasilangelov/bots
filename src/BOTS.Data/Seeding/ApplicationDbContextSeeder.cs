@@ -6,6 +6,7 @@
         {
             var seeders = new ISeeder[]
             {
+                new ApplicationSettingSeeder(),
                 new NationalitySeeder(),
                 new CurrencySeeder(),
                 new CurrencyPairSeeder(),

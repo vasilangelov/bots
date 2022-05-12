@@ -5,7 +5,6 @@ using BOTS.Data;
 using BOTS.Data.Models;
 using BOTS.Web.BackgroundServices;
 using BOTS.Web.Extensions;
-using BOTS.Services;
 using BOTS.Services.Models;
 using BOTS.Web.Hubs;
 using BOTS.Services.Data.Common;
@@ -18,6 +17,7 @@ using BOTS.Services.Data.Bets;
 using BOTS.Services.Data.Users;
 using BOTS.Web.Models.ViewModels;
 using BOTS.Services.Data.UserPresets;
+using BOTS.Services.Data.ApplicationSettings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,8 +56,6 @@ builder.Services
            .Add(new JsonStringEnumConverter());
     });
 
-builder.Services.Configure<ApplicationUserOptions>(builder.Configuration.GetSection("ApplicationUserOptions"));
-
 builder.Services.AddHttpClient<ThirdPartyCurrencyRateProviderService>();
 
 builder.Services.AddHostedService<CurrencyRateGeneratorBackgroundService>();
@@ -68,6 +66,7 @@ builder.Services.AddHostedService<CurrencyRateStatBackgroundService>();
 builder.Services.AddAutoMapper(typeof(ErrorViewModel).Assembly, typeof(TradingWindowOptionInfo).Assembly);
 
 builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddTransient<IApplicationSettingService, ApplicationSettingService>();
 builder.Services.AddTransient<INationalityService, NationalityService>();
 builder.Services.AddTransient<ICurrencyPairService, CurrencyPairService>();
 builder.Services.AddTransient<ITradingWindowService, TradingWindowService>();

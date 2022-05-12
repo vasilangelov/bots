@@ -20,6 +20,8 @@
 
         Task<T> GetActiveUserPresetAsync<T>(string userId);
 
+        Task<T> GetActiveUserPresetOrDefaultAsync<T>(string userId);
+
         Task<bool> IsUserPresetOwnerAsync(string userId, string presetId);
     }
 }

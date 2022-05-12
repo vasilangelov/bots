@@ -29,7 +29,7 @@ const trace = {
     line: { color: 'rgba(31,119,180,1)' },
     increasing: { line: { color: '#17BECF' } },
     decreasing: { line: { color: '#7F7F7F' } },
-    type: 'candlestick',
+    type: chartTypeSelect.options[chartTypeSelect.selectedIndex].textContent.toLowerCase(),
     xaxis: 'x',
     yaxis: 'y',
     xperiod: xPeriod,
@@ -120,19 +120,8 @@ connection.on('AddCurrencyRateHistory', ({ time, open, low, high, close }) => {
     });
 });
 
-const supportedChartTypes = [
-    { displayName: 'Candlestick', value: 'candlestick' },
-    { displayName: 'OHLC', value: 'ohlc' },
-];
-
-supportedChartTypes.forEach(({ displayName, value }) => {
-    const option = el('option', { textContent: displayName, value: value });
-
-    chartTypeSelect.appendChild(option);
-});
-
 chartTypeSelect.addEventListener('change', () => {
-    const chartType = chartTypeSelect.value;
+    const chartType = chartTypeSelect.options[chartTypeSelect.selectedIndex].textContent.toLowerCase();
 
     trace.type = chartType;
 

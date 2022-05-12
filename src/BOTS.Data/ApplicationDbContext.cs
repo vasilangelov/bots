@@ -7,6 +7,8 @@
 
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+        public DbSet<ApplicationSetting> ApplicationSettings { get; set; } = default!;
+
         public DbSet<Nationality> Nationalities { get; set; } = default!;
 
         public DbSet<Currency> Currencies { get; set; } = default!;
@@ -29,21 +31,29 @@
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder
+                .Entity<ApplicationSetting>()
+                .HasIndex(x => x.Key)
+                .IsUnique();
+
+            builder
                 .Entity<CurrencyPair>()
                 .HasIndex(x => new { x.LeftId, x.RightId })
                 .IsUnique();
 
-            builder.Entity<CurrencyPair>()
+            builder
+                .Entity<CurrencyPair>()
                 .HasOne(x => x.Left)
                 .WithMany(x => x.LeftPairs)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            builder.Entity<CurrencyPair>()
+            builder
+                .Entity<CurrencyPair>()
                 .HasOne(x => x.Right)
                 .WithMany(x => x.RightPairs)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            builder.Entity<TradingWindowOption>()
+            builder
+                .Entity<TradingWindowOption>()
                 .Property(x => x.Duration)
                 .HasConversion<long>();
 
