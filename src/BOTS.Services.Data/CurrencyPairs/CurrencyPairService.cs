@@ -7,6 +7,7 @@
 
     using BOTS.Services.Currencies;
     using BOTS.Services.Infrastructure.Extensions;
+    using BOTS.Data.Repositories;
 
     public class CurrencyPairService : ICurrencyPairService
     {

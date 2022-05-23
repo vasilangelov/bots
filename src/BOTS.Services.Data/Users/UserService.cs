@@ -1,4 +1,6 @@
-﻿namespace BOTS.Services.Data.Users
+﻿using BOTS.Data.Repositories;
+
+namespace BOTS.Services.Data.Users
 {
     public class UserService : IUserService
     {

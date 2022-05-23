@@ -1,29 +1,26 @@
 ﻿namespace BOTS.Web.BackgroundServices
 {
-    using Microsoft.AspNetCore.SignalR;
-    using System.Threading.Tasks;
     using System.Threading;
+    using System.Threading.Tasks;
 
-    using BOTS.Services.Currencies;
-    using BOTS.Services.Data.CurrencyPairs;
-    using BOTS.Web.Models;
-    using BOTS.Web.Hubs;
     using BOTS.Common;
+    using BOTS.Services.Currencies.CurrencyRates;
+    using BOTS.Services.CurrencyRateStats;
+    using BOTS.Web.Hubs;
     using BOTS.Web.Models.ViewModels;
+
+    using Microsoft.AspNetCore.SignalR;
 
     public class CurrencyRateStatBackgroundService : BackgroundService
     {
         private readonly IServiceProvider serviceProvider;
-        private readonly ICurrencyRateStatProviderService currencyRateStatProvider;
-        private readonly IHubContext<CurrencyHub> hubContext;
+        private readonly IHubContext<TradingHub> hubContext;
 
         public CurrencyRateStatBackgroundService(
             IServiceProvider serviceProvider,
-            ICurrencyRateStatProviderService currencyRateStatProvider,
-            IHubContext<CurrencyHub> hubContext)
+            IHubContext<TradingHub> hubContext)
         {
             this.serviceProvider = serviceProvider;
-            this.currencyRateStatProvider = currencyRateStatProvider;
             this.hubContext = hubContext;
         }
 
@@ -35,21 +32,24 @@
                 {
                     var currencyPairService = scope.ServiceProvider.GetRequiredService<ICurrencyPairService>();
 
-                    var currencyPairs = await currencyPairService.GetActiveCurrencyPairsAsync<CurrencyPairViewModel>();
+                    var currencyPairIds = await currencyPairService.GetActiveCurrencyPairIdsAsync();
 
                     await Parallel.ForEachAsync(
-                        currencyPairs,
-                        async (p, ct) =>
-                        {
-                            var model = await this.currencyRateStatProvider
-                                .GetLatestCurrencyRateStatAsync<CurrencyRateHistoryViewModel>(
-                                    p.LeftName,
-                                    p.RightName);
+                            currencyPairIds,
+                            async (id, ct) =>
+                            {
+                                using var newScope = this.serviceProvider.CreateAsyncScope();
 
-                            await this.hubContext.Clients
-                                .Group(p.Id.ToString())
-                                .SendAsync("AddCurrencyRateHistory", model, ct);
-                        });
+                                var currencyRateStatService = newScope.ServiceProvider
+                                        .GetRequiredService<ICurrencyRateStatService>();
+
+                                var model = await currencyRateStatService
+                                        .GetLatestStatAsync<CurrencyRateHistoryViewModel>(id);
+
+                                await this.hubContext.Clients
+                                    .Group(id.ToString())
+                                    .SendAsync("AddCurrencyRateHistory", model, ct);
+                            });
                 }
 
                 await Task.Delay(GlobalConstants.CurrencyRateStatUpdateFrequency, cancellationToken);

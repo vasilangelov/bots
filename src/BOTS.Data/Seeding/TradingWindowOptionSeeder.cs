@@ -6,36 +6,30 @@
 
     internal class TradingWindowOptionSeeder : ISeeder
     {
-        private readonly IEnumerable<TradingWindowOption> tradingWindowOptions
-            = new TradingWindowOption[] {
-                new TradingWindowOption
+        private readonly IEnumerable<TradingWindowPreset> tradingWindowPresets
+            = new TradingWindowPreset[] {
+                new TradingWindowPreset
                 {
                     Duration = TimeSpan.FromMinutes(10),
-                    BarrierStep = 0.05m,
-                    BarrierCount = 5,
                 },
-                new TradingWindowOption
+                new TradingWindowPreset
                 {
                     Duration = TimeSpan.FromMinutes(30),
-                    BarrierStep = 0.05m,
-                    BarrierCount = 5,
                 },
-                new TradingWindowOption
+                new TradingWindowPreset
                 {
                     Duration = TimeSpan.FromMinutes(60),
-                    BarrierStep = 0.05m,
-                    BarrierCount = 5,
                 },
             };
 
         public async Task SeedAsync(ApplicationDbContext dbContext)
         {
-            if (await dbContext.TradingWindowOptions.AnyAsync())
+            if (await dbContext.TradingWindowPresets.AnyAsync())
             {
                 return;
             }
 
-            await dbContext.TradingWindowOptions.AddRangeAsync(this.tradingWindowOptions);
+            await dbContext.TradingWindowPresets.AddRangeAsync(this.tradingWindowPresets);
         }
     }
 }

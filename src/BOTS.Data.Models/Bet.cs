@@ -4,16 +4,11 @@
 
     public class Bet
     {
-        public Bet()
-        {
-            this.Id = Guid.NewGuid().ToString();
-        }
-
-        public string Id { get; set; }
+        public Guid Id { get; set; }
 
         public BetType Type { get; set; }
 
-        public string UserId { get; set; } = default!;
+        public Guid UserId { get; set; }
 
         public virtual ApplicationUser User { get; set; } = default!;
 
@@ -23,10 +18,10 @@
         [Column(TypeName = "money")]
         public decimal EntryFee { get; set; }
 
-        public byte BarrierIndex { get; set; }
+        public decimal BarrierPrediction { get; set; } = default!;
 
-        public string TradingWindowId { get; set; } = default!;
+        public Guid BettingOptionId { get; set; }
 
-        public virtual TradingWindow TradingWindow { get; set; } = default!;
+        public virtual BettingOption BettingOption { get; set; } = default!;
     }
 }

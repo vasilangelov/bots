@@ -10,7 +10,9 @@
 
         public const int TradingWindowUpdateFrequency = 3 * 1000;
 
-        public const byte DecimalPlaces = 6;
+        public const byte BarrierDigitPrecision = 18;
+
+        public const byte DecimalPlacePrecision = 6;
 
         public const decimal MinCurrencyRateOffset = 0;
 

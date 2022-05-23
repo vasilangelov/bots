@@ -1,10 +1,11 @@
 ﻿namespace BOTS.Web.Models.ViewModels
 {
     using AutoMapper;
-    using Microsoft.AspNetCore.Mvc.Rendering;
 
     using BOTS.Data.Models;
     using BOTS.Services.Mapping;
+
+    using Microsoft.AspNetCore.Mvc.Rendering;
 
     public class CurrencyPairSelectViewModel : SelectListItem, ICustomMap
     {
@@ -14,7 +15,7 @@
         {
             configuration.CreateMap<CurrencyPair, CurrencyPairSelectViewModel>()
                 .ForMember(x => x.Value, x => x.MapFrom(y => y.Id))
-                .ForMember(x => x.Text, x => x.MapFrom(y => string.Format(CurrencyPairDisplayFormat, y.Left.Name, y.Right.Name)));
+                .ForMember(x => x.Text, x => x.MapFrom(y => string.Format(CurrencyPairDisplayFormat, y.CurrencyFrom.Name, y.CurrencyTo.Name)));
         }
     }
 }

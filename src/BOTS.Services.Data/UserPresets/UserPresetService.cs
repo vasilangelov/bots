@@ -2,6 +2,7 @@
 {
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
+    using BOTS.Data.Repositories;
     using BOTS.Services.Data.ApplicationSettings;
     using Microsoft.AspNetCore.Http;
     using Microsoft.Extensions.DependencyInjection;

@@ -1,11 +1,10 @@
 ﻿namespace BOTS.Web.Extensions
 {
-    using Microsoft.EntityFrameworkCore;
-
     using BOTS.Data;
     using BOTS.Data.Seeding;
-    using BOTS.Services.Data.CurrencyPairs;
-    using BOTS.Services.Currencies;
+    using BOTS.Services.Currencies.CurrencyRates;
+
+    using Microsoft.EntityFrameworkCore;
 
     public static class WebApplicationExtensions
     {
@@ -23,20 +22,16 @@
 
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            await ApplicationDbContextSeeder.SeedAsync(dbContext);
+            await SeederManager.SeedAsync(dbContext);
         }
 
         public static async Task SeedCurrenciesAsync(this WebApplication app)
         {
             using var scope = app.Services.CreateScope();
 
-            var currencyPairService = scope.ServiceProvider.GetRequiredService<ICurrencyPairService>();
+            var currencyService = scope.ServiceProvider.GetRequiredService<ICurrencyRateGeneratorService>();
 
-            var currencyRateGeneratorService = scope.ServiceProvider.GetRequiredService<ICurrencyRateGeneratorService>();
-
-            var activeCurrencies = await currencyPairService.GetAllActiveCurrencyPairNamesAsync();
-
-            await currencyRateGeneratorService.SeedInitialCurrencyRatesAsync(activeCurrencies);
+            await currencyService.SeedInitialCurrencyRatesAsync();
         }
     }
 }

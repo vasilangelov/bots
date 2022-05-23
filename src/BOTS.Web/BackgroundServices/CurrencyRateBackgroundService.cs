@@ -1,19 +1,19 @@
 ﻿namespace BOTS.Web.BackgroundServices
 {
-    using Microsoft.AspNetCore.SignalR;
-
     using BOTS.Common;
-    using BOTS.Services.Data.CurrencyPairs;
+    using BOTS.Services.Currencies.CurrencyRates;
     using BOTS.Web.Hubs;
+
+    using Microsoft.AspNetCore.SignalR;
 
     public class CurrencyRateBackgroundService : BackgroundService
     {
         private readonly IServiceProvider serviceProvider;
-        private readonly IHubContext<CurrencyHub> currencyHub;
+        private readonly IHubContext<TradingHub> currencyHub;
 
         public CurrencyRateBackgroundService(
             IServiceProvider serviceProvider,
-            IHubContext<CurrencyHub> currencyHub)
+            IHubContext<TradingHub> currencyHub)
         {
             this.serviceProvider = serviceProvider;
             this.currencyHub = currencyHub;
@@ -27,17 +27,21 @@
                 {
                     var currencyPairService = scope.ServiceProvider.GetRequiredService<ICurrencyPairService>();
 
-                    // TODO: maybe some kind of caching...
                     var currencyPairIds = await currencyPairService.GetActiveCurrencyPairIdsAsync();
 
-                    foreach (var currencyPairId in currencyPairIds)
+                    await Parallel.ForEachAsync(currencyPairIds, async (id, ct) =>
                     {
-                        decimal currencyRate = await currencyPairService.GetCurrencyRateAsync(currencyPairId);
+                        using var newScope = this.serviceProvider.CreateAsyncScope();
+
+                        var currencyRateProviderService = newScope.ServiceProvider.GetRequiredService<ICurrencyRateProviderService>();
+
+                        decimal currencyRate =
+                            await currencyRateProviderService.GetCurrencyRateAsync(id);
 
                         await this.currencyHub.Clients
-                                    .Group(currencyPairId.ToString())
-                                    .SendAsync("UpdateCurrencyRate", currencyRate, cancellationToken);
-                    }
+                                    .Group(id.ToString())
+                                    .SendAsync("UpdateCurrencyRate", currencyRate, ct);
+                    });
                 }
 
                 await Task.Delay(GlobalConstants.CurrencyValueUpdateFrequency, cancellationToken);

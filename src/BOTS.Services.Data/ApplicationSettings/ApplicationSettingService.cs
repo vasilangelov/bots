@@ -1,5 +1,6 @@
 ﻿namespace BOTS.Services.Data.ApplicationSettings
 {
+    using BOTS.Data.Repositories;
     using System.Text.Json;
 
     public class ApplicationSettingService : IApplicationSettingService

@@ -2,6 +2,7 @@
 {
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
+    using BOTS.Data.Repositories;
     using Microsoft.EntityFrameworkCore;
 
     public class NationalityService : INationalityService

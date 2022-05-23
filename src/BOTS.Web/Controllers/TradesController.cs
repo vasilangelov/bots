@@ -1,13 +1,13 @@
 ﻿namespace BOTS.Web.Controllers
 {
-    using Microsoft.AspNetCore.Authorization;
-    using Microsoft.AspNetCore.Mvc;
-
-    using BOTS.Web.Models.ViewModels;
-    using BOTS.Services.Data.CurrencyPairs;
-    using BOTS.Services.Data.UserPresets;
+    using BOTS.Services.Currencies.CurrencyRates;
+    using BOTS.Services.UserPresets;
     using BOTS.Web.Extensions;
     using BOTS.Web.Models.InputModels;
+    using BOTS.Web.Models.ViewModels;
+
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc;
 
     [Authorize]
     public class TradesController : Controller
@@ -38,11 +38,11 @@
         }
 
         [HttpGet]
-        public async Task<IActionResult> Presets(string? id)
+        public async Task<IActionResult> Presets(Guid? id)
         {
             var userId = this.User.GetUserId();
 
-            if (id is null)
+            if (!id.HasValue)
             {
                 var presetId = await this.userPresetService.GetActiveUserPresetIdAsync(userId);
 
@@ -54,7 +54,7 @@
                 return this.RedirectToAction(nameof(this.Presets), new { Id = presetId });
             }
 
-            bool userWithPresetExists = await this.userPresetService.IsUserPresetOwnerAsync(userId, id);
+            bool userWithPresetExists = await this.userPresetService.IsUserPresetOwnerAsync(userId, id.Value);
 
             if (!userWithPresetExists)
             {
@@ -66,7 +66,7 @@
                 CurrencyPairs = await this.currencyPairService
                                         .GetActiveCurrencyPairsAsync<CurrencyPairSelectViewModel>(),
                 UserPresets = await this.userPresetService.GetUserPresetsAsync<UserPresetViewModel>(userId),
-                CurrentPreset = await this.userPresetService.GetUserPresetAsync<UpdateUserPresetInputModel>(id),
+                CurrentPreset = await this.userPresetService.GetUserPresetAsync<UpdateUserPresetInputModel>(id.Value),
             };
 
             return this.View(model);
@@ -75,7 +75,7 @@
         [HttpPost]
         public async Task<IActionResult> Presets([Bind(Prefix = nameof(UserPresetsViewModel.CurrentPreset))] UpdateUserPresetInputModel userPreset)
         {
-            string userId = this.User.GetUserId();
+            var userId = this.User.GetUserId();
 
             bool userWithPresetExists = await this.userPresetService.IsUserPresetOwnerAsync(userId, userPreset.Id);
 
@@ -127,15 +127,15 @@
                 return this.View(model);
             }
 
-            string userId = this.User.GetUserId();
+            var userId = this.User.GetUserId();
 
-            string id = await this.userPresetService.AddPresetAsync(userId, userPreset);
+            var id = await this.userPresetService.AddPresetAsync(userId, userPreset);
 
             return this.RedirectToAction(nameof(this.Presets), new { Id = id });
         }
 
         [HttpGet("/Presets/SetActive/:id")]
-        public async Task<IActionResult> SetActivePreset(string id)
+        public async Task<IActionResult> SetActivePreset(Guid id)
         {
             var userId = this.User.GetUserId();
 
@@ -154,7 +154,7 @@
         }
 
         [HttpGet("/Presets/Delete/:id")]
-        public async Task<IActionResult> RemovePreset(string id)
+        public async Task<IActionResult> RemovePreset(Guid id)
         {
             var userId = this.User.GetUserId();
 

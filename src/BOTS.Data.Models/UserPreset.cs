@@ -4,16 +4,11 @@
 
     public class UserPreset
     {
-        public UserPreset()
-        {
-            this.Id = Guid.NewGuid().ToString();
-        }
-
-        public string Id { get; set; }
+        public Guid Id { get; set; }
 
         public string Name { get; set; } = default!;
 
-        public string OwnerId { get; set; } = default!;
+        public Guid OwnerId { get; set; } = default!;
 
         public virtual ApplicationUser Owner { get; set; } = default!;
 

@@ -22,6 +22,34 @@ namespace BOTS.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
 
+            modelBuilder.Entity("BOTS.Data.Models.ApplicationRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
             modelBuilder.Entity("BOTS.Data.Models.ApplicationSetting", b =>
                 {
                     b.Property<int>("Id")
@@ -49,8 +77,9 @@ namespace BOTS.Data.Migrations
 
             modelBuilder.Entity("BOTS.Data.Models.ApplicationUser", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
@@ -122,11 +151,16 @@ namespace BOTS.Data.Migrations
 
             modelBuilder.Entity("BOTS.Data.Models.Bet", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<byte>("BarrierIndex")
-                        .HasColumnType("tinyint");
+                    b.Property<decimal>("BarrierPrediction")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<Guid>("BettingOptionId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("EntryFee")
                         .HasColumnType("money");
@@ -134,24 +168,73 @@ namespace BOTS.Data.Migrations
                     b.Property<decimal>("Payout")
                         .HasColumnType("money");
 
-                    b.Property<string>("TradingWindowId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<byte>("Type")
                         .HasColumnType("tinyint");
 
-                    b.Property<string>("UserId")
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BettingOptionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Bets");
+                });
+
+            modelBuilder.Entity("BOTS.Data.Models.BettingOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("BarrierStep")
+                        .HasColumnType("money");
+
+                    b.Property<string>("Barriers")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("CloseValue")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<int>("CurrencyPairId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TradingWindowId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("TradingWindowId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("CurrencyPairId", "TradingWindowId")
+                        .IsUnique();
 
-                    b.ToTable("Bets");
+                    b.ToTable("BettingOptions");
+                });
+
+            modelBuilder.Entity("BOTS.Data.Models.BettingOptionPreset", b =>
+                {
+                    b.Property<int>("TradingWindowPresetId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CurrencyPairId")
+                        .HasColumnType("int");
+
+                    b.Property<byte>("BarrierCount")
+                        .HasColumnType("tinyint");
+
+                    b.Property<decimal>("BarrierStep")
+                        .HasColumnType("money");
+
+                    b.HasKey("TradingWindowPresetId", "CurrencyPairId");
+
+                    b.HasIndex("CurrencyPairId");
+
+                    b.ToTable("BettingOptionPresets");
                 });
 
             modelBuilder.Entity("BOTS.Data.Models.Currency", b =>
@@ -179,20 +262,20 @@ namespace BOTS.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
+                    b.Property<int>("CurrencyFromId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CurrencyToId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("Display")
                         .HasColumnType("bit");
 
-                    b.Property<int>("LeftId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RightId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("RightId");
+                    b.HasIndex("CurrencyToId");
 
-                    b.HasIndex("LeftId", "RightId")
+                    b.HasIndex("CurrencyFromId", "CurrencyToId")
                         .IsUnique();
 
                     b.ToTable("CurrencyPairs");
@@ -217,23 +300,21 @@ namespace BOTS.Data.Migrations
 
             modelBuilder.Entity("BOTS.Data.Models.TradingWindow", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<decimal?>("ClosingPrice")
-                        .HasColumnType("money");
-
-                    b.Property<int>("CurrencyPairId")
+                    b.Property<int?>("CurrencyPairId")
                         .HasColumnType("int");
+
+                    b.Property<TimeSpan>("Duration")
+                        .HasColumnType("time");
 
                     b.Property<DateTime>("End")
                         .HasColumnType("datetime2");
 
-                    b.Property<decimal>("OpeningPrice")
-                        .HasColumnType("money");
-
-                    b.Property<int>("OptionId")
-                        .HasColumnType("int");
+                    b.Property<bool>("IsClosed")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("Start")
                         .HasColumnType("datetime2");
@@ -242,12 +323,10 @@ namespace BOTS.Data.Migrations
 
                     b.HasIndex("CurrencyPairId");
 
-                    b.HasIndex("OptionId");
-
                     b.ToTable("TradingWindows");
                 });
 
-            modelBuilder.Entity("BOTS.Data.Models.TradingWindowOption", b =>
+            modelBuilder.Entity("BOTS.Data.Models.TradingWindowPreset", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -255,24 +334,19 @@ namespace BOTS.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("BarrierCount")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("BarrierStep")
-                        .HasColumnType("money");
-
                     b.Property<long>("Duration")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
-                    b.ToTable("TradingWindowOptions");
+                    b.ToTable("TradingWindowPresets");
                 });
 
             modelBuilder.Entity("BOTS.Data.Models.UserPreset", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("ChartType")
                         .HasColumnType("int");
@@ -287,9 +361,8 @@ namespace BOTS.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("OwnerId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Payout")
                         .HasColumnType("money");
@@ -303,34 +376,7 @@ namespace BOTS.Data.Migrations
                     b.ToTable("UserPresets");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
-
-                    b.ToTable("AspNetRoles", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -344,9 +390,8 @@ namespace BOTS.Data.Migrations
                     b.Property<string>("ClaimValue")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RoleId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -355,7 +400,7 @@ namespace BOTS.Data.Migrations
                     b.ToTable("AspNetRoleClaims", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -369,9 +414,8 @@ namespace BOTS.Data.Migrations
                     b.Property<string>("ClaimValue")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -380,7 +424,7 @@ namespace BOTS.Data.Migrations
                     b.ToTable("AspNetUserClaims", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
                     b.Property<string>("LoginProvider")
                         .HasMaxLength(128)
@@ -393,9 +437,8 @@ namespace BOTS.Data.Migrations
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -404,13 +447,13 @@ namespace BOTS.Data.Migrations
                     b.ToTable("AspNetUserLogins", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("RoleId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -419,10 +462,10 @@ namespace BOTS.Data.Migrations
                     b.ToTable("AspNetUserRoles", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("LoginProvider")
                         .HasMaxLength(128)
@@ -453,9 +496,9 @@ namespace BOTS.Data.Migrations
 
             modelBuilder.Entity("BOTS.Data.Models.Bet", b =>
                 {
-                    b.HasOne("BOTS.Data.Models.TradingWindow", "TradingWindow")
+                    b.HasOne("BOTS.Data.Models.BettingOption", "BettingOption")
                         .WithMany("Bets")
-                        .HasForeignKey("TradingWindowId")
+                        .HasForeignKey("BettingOptionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -465,47 +508,73 @@ namespace BOTS.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("TradingWindow");
+                    b.Navigation("BettingOption");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("BOTS.Data.Models.CurrencyPair", b =>
-                {
-                    b.HasOne("BOTS.Data.Models.Currency", "Left")
-                        .WithMany("LeftPairs")
-                        .HasForeignKey("LeftId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("BOTS.Data.Models.Currency", "Right")
-                        .WithMany("RightPairs")
-                        .HasForeignKey("RightId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Left");
-
-                    b.Navigation("Right");
-                });
-
-            modelBuilder.Entity("BOTS.Data.Models.TradingWindow", b =>
+            modelBuilder.Entity("BOTS.Data.Models.BettingOption", b =>
                 {
                     b.HasOne("BOTS.Data.Models.CurrencyPair", "CurrencyPair")
-                        .WithMany("TradingWindows")
+                        .WithMany()
                         .HasForeignKey("CurrencyPairId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("BOTS.Data.Models.TradingWindowOption", "Option")
-                        .WithMany("TradingWindows")
-                        .HasForeignKey("OptionId")
+                    b.HasOne("BOTS.Data.Models.TradingWindow", "TradingWindow")
+                        .WithMany("BettingOptions")
+                        .HasForeignKey("TradingWindowId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CurrencyPair");
 
-                    b.Navigation("Option");
+                    b.Navigation("TradingWindow");
+                });
+
+            modelBuilder.Entity("BOTS.Data.Models.BettingOptionPreset", b =>
+                {
+                    b.HasOne("BOTS.Data.Models.CurrencyPair", "CurrencyPair")
+                        .WithMany("BettingOptionPresets")
+                        .HasForeignKey("CurrencyPairId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BOTS.Data.Models.TradingWindowPreset", "TradingWindowPreset")
+                        .WithMany("BettingOptionPresets")
+                        .HasForeignKey("TradingWindowPresetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CurrencyPair");
+
+                    b.Navigation("TradingWindowPreset");
+                });
+
+            modelBuilder.Entity("BOTS.Data.Models.CurrencyPair", b =>
+                {
+                    b.HasOne("BOTS.Data.Models.Currency", "CurrencyFrom")
+                        .WithMany("CurrenciesFrom")
+                        .HasForeignKey("CurrencyFromId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("BOTS.Data.Models.Currency", "CurrencyTo")
+                        .WithMany("CurrenciesTo")
+                        .HasForeignKey("CurrencyToId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CurrencyFrom");
+
+                    b.Navigation("CurrencyTo");
+                });
+
+            modelBuilder.Entity("BOTS.Data.Models.TradingWindow", b =>
+                {
+                    b.HasOne("BOTS.Data.Models.CurrencyPair", null)
+                        .WithMany("TradingWindows")
+                        .HasForeignKey("CurrencyPairId");
                 });
 
             modelBuilder.Entity("BOTS.Data.Models.UserPreset", b =>
@@ -527,16 +596,16 @@ namespace BOTS.Data.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    b.HasOne("BOTS.Data.Models.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
                     b.HasOne("BOTS.Data.Models.ApplicationUser", null)
                         .WithMany()
@@ -545,7 +614,7 @@ namespace BOTS.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
                     b.HasOne("BOTS.Data.Models.ApplicationUser", null)
                         .WithMany()
@@ -554,9 +623,9 @@ namespace BOTS.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    b.HasOne("BOTS.Data.Models.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -569,7 +638,7 @@ namespace BOTS.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
                     b.HasOne("BOTS.Data.Models.ApplicationUser", null)
                         .WithMany()
@@ -585,15 +654,22 @@ namespace BOTS.Data.Migrations
                     b.Navigation("Presets");
                 });
 
+            modelBuilder.Entity("BOTS.Data.Models.BettingOption", b =>
+                {
+                    b.Navigation("Bets");
+                });
+
             modelBuilder.Entity("BOTS.Data.Models.Currency", b =>
                 {
-                    b.Navigation("LeftPairs");
+                    b.Navigation("CurrenciesFrom");
 
-                    b.Navigation("RightPairs");
+                    b.Navigation("CurrenciesTo");
                 });
 
             modelBuilder.Entity("BOTS.Data.Models.CurrencyPair", b =>
                 {
+                    b.Navigation("BettingOptionPresets");
+
                     b.Navigation("TradingWindows");
                 });
 
@@ -604,12 +680,12 @@ namespace BOTS.Data.Migrations
 
             modelBuilder.Entity("BOTS.Data.Models.TradingWindow", b =>
                 {
-                    b.Navigation("Bets");
+                    b.Navigation("BettingOptions");
                 });
 
-            modelBuilder.Entity("BOTS.Data.Models.TradingWindowOption", b =>
+            modelBuilder.Entity("BOTS.Data.Models.TradingWindowPreset", b =>
                 {
-                    b.Navigation("TradingWindows");
+                    b.Navigation("BettingOptionPresets");
                 });
 #pragma warning restore 612, 618
         }

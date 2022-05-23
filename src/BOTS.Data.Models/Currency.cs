@@ -6,10 +6,11 @@
 
         public string Name { get; set; } = default!;
 
-        public virtual ICollection<CurrencyPair> LeftPairs { get; set; }
+        // TODO: try to remove these relations (because they are unneeded)
+        public virtual ICollection<CurrencyPair> CurrenciesFrom { get; set; }
             = new HashSet<CurrencyPair>();
 
-        public virtual ICollection<CurrencyPair> RightPairs { get; set; }
+        public virtual ICollection<CurrencyPair> CurrenciesTo { get; set; }
             = new HashSet<CurrencyPair>();
     }
 }

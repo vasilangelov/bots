@@ -7,13 +7,13 @@
 
     public class BetViewModel : ICustomMap
     {
-        public string Id { get; set; } = default!;
+        public Guid Id { get; set; } = default!;
 
         public string Type { get; set; } = default!;
 
         public string CurrencyPair { get; set; } = default!;
 
-        public decimal Barrier { get; set; }
+        public decimal BarrierPrediction { get; set; }
 
         public string EndsOn { get; set; } = default!;
 
@@ -25,15 +25,12 @@
         {
             configuration.CreateMap<Bet, BetViewModel>()
                 .ForMember(
-                    x => x.Barrier,
-                    opt => opt.MapFrom(y => y.TradingWindow.OpeningPrice + (y.BarrierIndex - y.TradingWindow.Option.BarrierCount / 2) * y.TradingWindow.Option.BarrierStep))
-                .ForMember(
                     x => x.CurrencyPair,
-                    opt => opt.MapFrom(y => y.TradingWindow.CurrencyPair.Left.Name + "/" + y.TradingWindow.CurrencyPair.Right.Name)
+                    opt => opt.MapFrom(y => y.BettingOption.CurrencyPair.CurrencyFrom.Name + "/" + y.BettingOption.CurrencyPair.CurrencyTo.Name)
                 )
                 .ForMember(
                     x => x.EndsOn,
-                    opt => opt.MapFrom(y => DateTime.SpecifyKind(y.TradingWindow.End, DateTimeKind.Utc).ToString("O")));
+                    opt => opt.MapFrom(y => DateTime.SpecifyKind(y.BettingOption.TradingWindow.End, DateTimeKind.Utc).ToString("O")));
         }
     }
 }

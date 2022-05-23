@@ -6,7 +6,7 @@ const numberFormat = /^[0-9]+(?:.[0-9]{1,2})?$/m;
 
 const currencyRateDiv = document.getElementById('currencyRate');
 const currencyPairSelect = document.getElementById('currencyPair');
-const tradingWindowsSelect = document.getElementById('tradingWindows');
+const bettingOptionsSelect = document.getElementById('bettingOptions');
 const barrierContainer = document.getElementById('barrierContainer');
 const payoutInput = document.getElementById('payoutInput');
 const timeRemainingField = document.getElementById('timeRemaining');
@@ -14,25 +14,32 @@ const portfolioContainer = document.getElementById('activeBets');
 const balanceContainer = document.getElementById('balance');
 
 let activeBets = [];
-let windowInfo = [];
+let barriers = [];
 let currentCurrencyPair;
-let currentSubscribedTradingWindow;
+let currentSubscribedBettingOption;
 let activeTimer;
 let payout = Number(payoutInput.value);
 
 function addCurrencySubscription() {
     currentCurrencyPair = Number(currencyPairSelect.value);
 
-    connection.invoke('AddCurrencyRateSubscription', currentCurrencyPair);
+    connection.invoke('AddCurrencyRateSubscription', currentCurrencyPair)
+        .then(() => {
+            connection.invoke('RemoveBettingOptionSubscription', currentSubscribedBettingOption)
+                .then(() => {
+                    currentSubscribedBettingOption = undefined;
+                })
+                .then(requestBettingOptionsForCurrencyPair);
+        })
 }
 
 function removeCurrencySubscription() {
     return connection.invoke('RemoveCurrencyRateSubscription', currentCurrencyPair);
 }
 
-function requestTradingWindows() {
-    connection
-        .invoke('GetActiveTradingWindows', currentCurrencyPair);
+function requestBettingOptionsForCurrencyPair() {
+    return connection
+        .invoke('GetBettingOptionsForCurrencyPair', currentCurrencyPair);
 }
 
 function requestActiveBets() {
@@ -53,7 +60,7 @@ function changeButtonPrice(btn, payout, value) {
 }
 
 function renderBarriers() {
-    windowInfo.forEach((w, i) => {
+    barriers.forEach((b, i) => {
         let barrier = barrierContainer.children[i];
 
         if (barrier === undefined) {
@@ -64,8 +71,8 @@ function renderBarriers() {
             const tdh = el('td');
             const tdl = el('td');
 
-            const btnh = el('button', { className: 'btn btn-primary container-fluid' }, { 'data-barrier-number': windowInfo.length - i - 1, 'data-prediction': 'Higher' });
-            const btnl = el('button', { className: 'btn btn-danger container-fluid' }, { 'data-barrier-number': windowInfo.length - i - 1, 'data-prediction': 'Lower' });
+            const btnh = el('button', { className: 'btn btn-primary container-fluid' }, { 'data-barrier-value': b.barrier, 'data-prediction': 'Higher' });
+            const btnl = el('button', { className: 'btn btn-danger container-fluid' }, { 'data-barrier-value': b.barrier, 'data-prediction': 'Lower' });
 
             tdh.appendChild(btnh);
             tdl.appendChild(btnl);
@@ -79,13 +86,13 @@ function renderBarriers() {
             barrier = barrierContainer.children[i];
         }
 
-        barrier.querySelector('th').textContent = w.barrier;
+        barrier.querySelector('th').textContent = b.barrier;
 
-        const higherEntry = Math.round(w.high * payout * 100) / 100;
+        const higherEntry = Math.round(b.high * payout * 100) / 100;
         const higherBtn = barrier.querySelector('td > button.btn-primary');
         changeButtonPrice(higherBtn, payout, higherEntry);
 
-        const lowerEntry = Math.round(w.low * payout * 100) / 100;
+        const lowerEntry = Math.round(b.low * payout * 100) / 100;
         const lowerBtn = barrier.querySelector('td > button.btn-danger');
         changeButtonPrice(lowerBtn, payout, lowerEntry);
     });
@@ -99,7 +106,7 @@ function renderBets() {
         const tr = el('tr');
 
         tr.appendChild(el('td', { textContent: bet.id }));
-        tr.appendChild(el('td', { textContent: `${bet.currencyPair} is ${bet.type} than ${bet.barrier} on ${new Date(bet.endsOn).toLocaleString()}` }));
+        tr.appendChild(el('td', { textContent: `${bet.currencyPair} is ${bet.type} than ${bet.barrierPrediction.toFixed(6)} on ${new Date(bet.endsOn).toLocaleString()}` }));
         tr.appendChild(el('td', { textContent: bet.entryFee.toFixed(2) }));
         tr.appendChild(el('td', { textContent: bet.payout.toFixed(2) }));
 
@@ -111,7 +118,7 @@ connection.on('UpdateCurrencyRate', (cr) => {
     currencyRateDiv.textContent = cr;
 });
 
-connection.on('UpdateTimer', ({ end }) => {
+connection.on('UpdateTimer', (end) => {
     if (!!activeTimer) {
         clearInterval(activeTimer);
         activeTimer = undefined;
@@ -119,12 +126,18 @@ connection.on('UpdateTimer', ({ end }) => {
 
     const endDate = new Date(end);
 
+    let renewBettingOptionsTimeout;
+
     activeTimer = setInterval(() => {
         const remaining = endDate.getTime() - Date.now();
 
-        if (remaining < 0) {
-            currentSubscribedTradingWindow = undefined;
-            requestTradingWindows();
+        if (remaining < 0 && renewBettingOptionsTimeout === undefined) {
+            renewBettingOptionsTimeout = setTimeout(() => {
+                currentSubscribedBettingOption = undefined;
+                requestBettingOptionsForCurrencyPair().then(() => {
+                    renewBettingOptionsTimeout = undefined;
+                });
+            }, 1000);
         }
 
         const hours = Math.floor(Math.abs(remaining / 1000 / 60 / 60)).toString().padStart(2, '0');
@@ -136,36 +149,33 @@ connection.on('UpdateTimer', ({ end }) => {
     }, 500);
 });
 
-connection.on('SetTradingWindows', (windows) => {
-    tradingWindowsSelect.innerHTML = '';
+connection.on('SetBettingOptions', (bettingOptions) => {
+    bettingOptionsSelect.innerHTML = '';
 
-    windows.forEach(({ id, start, end }) => {
+    bettingOptions.forEach(({ id, start, end }) => {
         const startCurrent = new Date(start).toLocaleTimeString();
         const endCurrent = new Date(end).toLocaleTimeString();
 
         const displayName = `${startCurrent} - ${endCurrent}`;
 
-        tradingWindowsSelect.appendChild(el('option', { value: id, textContent: displayName }));
+        bettingOptionsSelect.appendChild(el('option', { value: id, textContent: displayName }));
     });
 
-    if (!currentSubscribedTradingWindow && windows.length > 0) {
-        const { id } = windows[0];
+    if (!currentSubscribedBettingOption && bettingOptions.length > 0) {
+        const { id } = bettingOptions[0];
 
-        if (currentSubscribedTradingWindow !== undefined) {
-            connection.invoke('RemoveTradingWindowSubscription', currentSubscribedTradingWindow);
+        if (currentSubscribedBettingOption !== undefined) {
+            connection.invoke('RemoveBettingOptionSubscription', currentSubscribedBettingOption);
         }
 
-        currentSubscribedTradingWindow = id;
-        connection.invoke('AddTradingWindowSubscription', id);
+        currentSubscribedBettingOption = id;
+        barrierContainer.innerHTML = '';
+        connection.invoke('AddBettingOptionSubscription', id);
     }
 });
 
-connection.on('UpdateTradingWindow', (windows) => {
-    windowInfo = [];
-
-    windows.forEach((w, i) => {
-        windowInfo[i] = w;
-    });
+connection.on('UpdateBarriers', (bettingOptions) => {
+    barriers = bettingOptions.sort((a, b) => b.barrier - a.barrier);
 
     renderBarriers();
 });
@@ -186,26 +196,27 @@ connection.on('UpdateBalance', (balance) => {
 
 connection.start()
     .then(addCurrencySubscription)
-    .then(requestTradingWindows)
+    .then(requestBettingOptionsForCurrencyPair)
     .then(requestActiveBets);
 
 currencyPairSelect.addEventListener('change', () => {
     removeCurrencySubscription()
         .then(addCurrencySubscription)
-        .then(requestTradingWindows);
+        .then(requestBettingOptionsForCurrencyPair);
 });
 
-tradingWindowsSelect.addEventListener('focusin', requestTradingWindows);
+bettingOptionsSelect.addEventListener('focusin', requestBettingOptionsForCurrencyPair);
 
-tradingWindowsSelect.addEventListener('change', () => {
-    const id = tradingWindowsSelect.value;
+bettingOptionsSelect.addEventListener('change', () => {
+    const id = bettingOptionsSelect.value;
 
-    if (currentSubscribedTradingWindow !== undefined) {
-        connection.invoke('RemoveTradingWindowSubscription', currentSubscribedTradingWindow);
+    if (currentSubscribedBettingOption !== undefined) {
+        connection.invoke('RemoveBettingOptionSubscription', currentSubscribedBettingOption);
     }
 
-    currentSubscribedTradingWindow = id;
-    connection.invoke('AddTradingWindowSubscription', id);
+    currentSubscribedBettingOption = id;
+    barrierContainer.innerHTML = '';
+    connection.invoke('AddBettingOptionSubscription', id);
 });
 
 payoutInput.addEventListener('input', (e) => {
@@ -220,8 +231,8 @@ payoutInput.addEventListener('input', (e) => {
 
 barrierContainer.addEventListener('click', (e) => {
     if (e.target instanceof HTMLButtonElement) {
-        const { barrierNumber, prediction } = e.target.dataset;
+        const { barrierValue, prediction } = e.target.dataset;
 
-        connection.invoke('PlaceTradingWindowBet', tradingWindowsSelect.value, prediction, Number(barrierNumber), payout);
+        connection.invoke('PlaceBettingOptionBet', bettingOptionsSelect.value, prediction, Number(barrierValue), payout);
     }
 });

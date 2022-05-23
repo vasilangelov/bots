@@ -5,32 +5,50 @@
     using Microsoft.Extensions.Caching.Memory;
 
     using BOTS.Services.Data.CurrencyPairs;
-    using BOTS.Services.Models;
     using BOTS.Services.Infrastructure.Extensions;
     using BOTS.Services.Data.Users;
+    using BOTS.Common;
+    using BOTS.Data.Repositories;
 
     public class TradingWindowService : ITradingWindowService
     {
         private static readonly object tradingWindowsKey = new();
 
+        public static decimal GetHigherPercentage(
+            decimal currencyRate,
+            decimal barrier,
+            decimal delta,
+            long remaining,
+            long fullTime)
+            => (currencyRate - barrier) / delta + 0.5m * (2 - remaining / (decimal)fullTime);
+
+        public static decimal GetLowerPercentage(
+            decimal currencyRate,
+            decimal barrier,
+            decimal delta,
+            long remaining,
+            long fullTime)
+           => (barrier - currencyRate) / delta + 0.5m * (2 - remaining / (decimal)fullTime);
+
         private readonly IRepository<TradingWindow> tradingWindowRepository;
+        private readonly IRepository<TradingWindowPreset> tradingWindowPresetRepository;
         private readonly IUserService userService;
         private readonly ICurrencyPairService currencyPairService;
-        private readonly ITradingWindowOptionService tradingWindowOptionService;
         private readonly IMapper mapper;
         private readonly IMemoryCache memoryCache;
 
-        public TradingWindowService(IRepository<TradingWindow> tradingWindowRepository,
-                                    IUserService userService,
-                                    ICurrencyPairService currencyPairService,
-                                    ITradingWindowOptionService tradingWindowOptionService,
-                                    IMapper mapper,
-                                    IMemoryCache memoryCache)
+        public TradingWindowService(
+            IRepository<TradingWindow> tradingWindowRepository,
+            IRepository<TradingWindowPreset> tradingWindowPresetRepository,
+            IUserService userService,
+            ICurrencyPairService currencyPairService,
+            IMapper mapper,
+            IMemoryCache memoryCache)
         {
             this.tradingWindowRepository = tradingWindowRepository;
+            this.tradingWindowPresetRepository = tradingWindowPresetRepository;
             this.userService = userService;
             this.currencyPairService = currencyPairService;
-            this.tradingWindowOptionService = tradingWindowOptionService;
             this.mapper = mapper;
             this.memoryCache = memoryCache;
         }
@@ -41,7 +59,7 @@
                         .AllAsNotracking()
                         .Where(x => x.CurrencyPairId == currencyPairId &&
                                     x.End > DateTime.UtcNow)
-                        .OrderBy(x => x.Option.Duration)
+                        .OrderBy(x => x.Setting.Duration)
                         .ProjectTo<T>(this.mapper.ConfigurationProvider)
                         .ToArrayAsync();
 
@@ -70,9 +88,9 @@
                  .Select(x => new
                  {
                      x.CurrencyPairId,
-                     x.Option.BarrierCount,
-                     x.Option.BarrierStep,
-                     x.OpeningPrice,
+                     x.Setting.BarrierCount,
+                     x.Setting.BarrierStep,
+                     x.Barriers,
                      RemainingTime = (int)x.End.Subtract(DateTime.UtcNow).TotalSeconds,
                      FullTime = (int)x.End.Subtract(x.Start).TotalSeconds
                  })
@@ -85,7 +103,7 @@
 
             var currencyRate = await this.currencyPairService.GetCurrencyRateAsync(window.CurrencyPairId);
 
-            var barrier = this.CalculateBarrier(barrierIndex, window.BarrierCount, window.OpeningPrice, window.BarrierStep);
+            var barrier = window.Barriers[barrierIndex];
 
             var barrierDistance = betType switch
             {
@@ -99,13 +117,6 @@
             return barrierDistance / delta + 0.5m * (2 - window.RemainingTime / (decimal)window.FullTime);
         }
 
-        public decimal CalculateBarrier(
-            byte barrierIndex,
-            int barrierCount,
-            decimal openingPrice,
-            decimal barrierStep)
-            => openingPrice + (barrierIndex - barrierCount / 2) * barrierStep;
-
         public async Task<bool> IsTradingWindowActiveAsync(string tradingWindowId)
             => await this.tradingWindowRepository
                         .AllAsNotracking()
@@ -117,96 +128,94 @@
                 tradingWindowsKey,
                 this.GetActiveTradingWindows);
 
-            var tradingWindowOptions = await this.tradingWindowOptionService
-                    .GetAllTradingWindowOptionsAsync<TradingWindowOptionInfo>();
+            var tradingWindowPresets = await this.tradingWindowPresetRepository
+                                        .AllAsNotracking()
+                                        .Select(x => new
+                                        {
+                                            x.SettingId,
+                                            x.CurrencyPairId,
+                                            x.TradingWindowSetting.BarrierCount,
+                                            x.TradingWindowSetting.BarrierStep,
+                                            x.TradingWindowSetting.Duration,
+                                        })
+                                        .ToArrayAsync();
 
-            var endedTradingWindows = tradingWindows
-                                        .Where(x => DateTime.UtcNow >= x.End)
-                                        .ToArray();
+            var now = DateTime.UtcNow;
 
-            foreach (var tradingWindow in endedTradingWindows)
+            var endedWindows = tradingWindows.Where(x => x.End <= now).ToArray();
+
+            foreach (var endedWindow in endedWindows)
             {
-                decimal currencyRate = await this.currencyPairService.GetCurrencyRateAsync(tradingWindow.CurrencyPairId);
+                decimal currentPrice = await this.currencyPairService.GetCurrencyRateAsync(endedWindow.CurrencyPairId);
 
-                tradingWindows.Remove(tradingWindow);
+                await this.CloseTradingWindowAsync(endedWindow, currentPrice);
 
-                await this.UpdateTradingWindowClosingPriceAsync(tradingWindow, currencyRate);
+                tradingWindows.Remove(endedWindow);
             }
 
-            // TODO: bulk save changes???
-            await this.tradingWindowRepository.SaveChangesAsync();
-
-            foreach (var currencyPairId in currencyPairIds)
+            foreach (var preset in tradingWindowPresets)
             {
-                foreach (var tradingWindowOption in tradingWindowOptions)
+                bool tradingWindowExists = tradingWindows.Any(x =>
+                                                x.CurrencyPairId == preset.CurrencyPairId &&
+                                                x.SettingId == preset.SettingId);
+
+                if (!tradingWindowExists)
                 {
-                    bool hasActiveTradingWindow = tradingWindows
-                                                    .Any(x => x.CurrencyPairId == currencyPairId &&
-                                                              x.OptionId == tradingWindowOption.Id);
-
-                    if (!hasActiveTradingWindow)
-                    {
-                        var tradingWindow = await this.CreateTradingWindowAsync(
-                                                            currencyPairId,
-                                                            tradingWindowOption.Id,
-                                                            tradingWindowOption.Duration);
-
-                        tradingWindows.Add(tradingWindow);
-                    }
+                    await this.CreateTradingWindowAsync(preset.CurrencyPairId,
+                                                        preset.SettingId,
+                                                        preset.BarrierCount,
+                                                        preset.BarrierStep,
+                                                        preset.Duration);
                 }
             }
         }
 
         public async Task UpdateEndedTradingWindowsAsync()
         {
-            var unsetEndedTradingWindows = await this.GetUnsetEndedTradingWindowsAsync();
+            var unsetEndedTradingWindows = await this.GetNotClosedEndedTradingWindowsAsync();
 
             foreach (var tradingWindow in unsetEndedTradingWindows)
             {
                 decimal currencyRate = await this.currencyPairService.GetPastCurrencyRateAsync(tradingWindow.CurrencyPairId, tradingWindow.End);
 
-                await this.UpdateTradingWindowClosingPriceAsync(tradingWindow, currencyRate);
+                await this.CloseTradingWindowAsync(tradingWindow, currencyRate);
             }
 
             await this.tradingWindowRepository.SaveChangesAsync();
         }
 
-        private async Task UpdateTradingWindowClosingPriceAsync(TradingWindow tradingWindow, decimal closingPrice)
+        public async Task<decimal?> GetBarrierAsync(string tradingWindowId, byte barrierIndex)
+        {
+            var barriers = await this.tradingWindowRepository
+                                       .AllAsNotracking()
+                                       .Where(x => x.Id == tradingWindowId)
+                                       .Select(x => x.Barriers)
+                                       .FirstOrDefaultAsync();
+
+            if (barriers is not null && barrierIndex < barriers.Length)
+            {
+                return barriers[barrierIndex];
+            }
+
+            return null;
+        }
+
+        private async Task CloseTradingWindowAsync(TradingWindow tradingWindow)
         {
             // TODO: IMPORTANT! calculate circulating money...
-            tradingWindow.ClosingPrice = closingPrice;
+            tradingWindow.IsClosed = true;
 
             this.tradingWindowRepository.Update(tradingWindow);
 
-            await this.UpdateWinningBetsAsync(tradingWindow.Id);
+            // TODO: notify 
+            // TODO: greda :) circular dependency Bet <-> TradingWindow...
+            await this.(tradingWindow.Id);
         }
 
-        private async Task UpdateWinningBetsAsync(string tradingWindowId)
-        {
-            var bets = await this.GetWinningBetsAsync(tradingWindowId);
-
-            foreach (var bet in bets)
-            {
-                await this.userService.AddToBalanceAsync(bet.UserId, bet.Payout);
-            }
-        }
-
-        private async Task<IEnumerable<Bet>> GetWinningBetsAsync(string tradingWindowId)
-            => await this.tradingWindowRepository
-                    .AllAsNotracking()
-                    .Where(x => x.Id == tradingWindowId)
-                    .SelectMany(x => x.Bets
-                        .Where(y =>
-                            (y.Type == BetType.Higher &&
-                             y.TradingWindow.OpeningPrice + (y.BarrierIndex - y.TradingWindow.Option.BarrierCount / 2) * y.TradingWindow.Option.BarrierStep <= y.TradingWindow.ClosingPrice) ||
-                            (y.Type == BetType.Lower && y.TradingWindow.OpeningPrice + (y.BarrierIndex - y.TradingWindow.Option.BarrierCount / 2) * y.TradingWindow.Option.BarrierStep > y.TradingWindow.ClosingPrice)))
-                    .ToArrayAsync();
-
-        private async Task<IEnumerable<TradingWindow>> GetUnsetEndedTradingWindowsAsync()
+        private async Task<IEnumerable<TradingWindow>> GetNotClosedEndedTradingWindowsAsync()
             => await this.tradingWindowRepository
                             .AllAsNotracking()
-                            .Where(x => DateTime.UtcNow >= x.End &&
-                                        !x.ClosingPrice.HasValue)
+                            .Where(x => DateTime.UtcNow >= x.End && !x.IsClosed)
                             .ToArrayAsync();
 
         private ICollection<TradingWindow> GetActiveTradingWindows()
@@ -217,18 +226,27 @@
 
         private async Task<TradingWindow> CreateTradingWindowAsync(
             int currencyPairId,
-            int tradingWindowOptionId,
+            int tradingWindowSettingId,
+            int barrierCount,
+            decimal barrierStep,
             TimeSpan duration)
         {
             var openingPrice = await this.currencyPairService.GetCurrencyRateAsync(currencyPairId);
+
+            int startingIndex = -barrierCount / 2;
+
+            decimal[] barriers = Enumerable.Range(startingIndex, barrierCount)
+                .Select(barrierIndex => decimal.Round(openingPrice + barrierIndex * barrierStep, GlobalConstants.DecimalPlaces))
+                .Reverse()
+                .ToArray();
 
             var start = DateTime.UtcNow;
 
             var model = new TradingWindow
             {
                 CurrencyPairId = currencyPairId,
-                OptionId = tradingWindowOptionId,
-                OpeningPrice = openingPrice,
+                SettingId = tradingWindowSettingId,
+                Barriers = barriers,
                 Start = start,
                 End = start.Add(duration)
             };

@@ -7,6 +7,8 @@
     using BOTS.Data;
     using BOTS.Services.Data.TradingWindows;
     using BOTS.Services.Data.Users;
+    using BOTS.Services.Data.CurrencyPairs;
+    using BOTS.Data.Repositories;
 
     public class BetService : IBetService
     {
@@ -14,6 +16,7 @@
         private readonly IRepository<Bet> betRepository;
         private readonly IUserService userService;
         private readonly ITradingWindowService tradingWindowService;
+        private readonly ICurrencyPairService currencyPairService;
         private readonly IMapper mapper;
 
         public BetService(
@@ -21,12 +24,14 @@
             IRepository<Bet> betRepository,
             IUserService userService,
             ITradingWindowService tradingWindowService,
+            ICurrencyPairService currencyPairService,
             IMapper mapper)
         {
             this.dbContext = dbContext;
             this.betRepository = betRepository;
             this.userService = userService;
             this.tradingWindowService = tradingWindowService;
+            this.currencyPairService = currencyPairService;
             this.mapper = mapper;
         }
 
@@ -93,12 +98,14 @@
                     throw new InvalidOperationException("Trading window is closed");
                 }
 
+                decimal? barrier = await this.tradingWindowService.GetBarrierAsync(tradingWindowId, barrierIndex);
+
                 var result =
                     await this.AddBetAsync<T>(
                         userId,
                         tradingWindowId,
                         betType,
-                        barrierIndex,
+                        barrier.Value,
                         entryFee,
                         payout);
 
@@ -118,11 +125,18 @@
             }
         }
 
+        public async Task RewardWinningBetsAsync(
+            string tradingWindowId,
+            decimal currencyRate)
+        {
+            
+        }
+
         private async Task<T> AddBetAsync<T>(
             string userId,
             string tradingWindowId,
             BetType betType,
-            byte barrierIndex,
+            decimal barrier,
             decimal entryFee,
             decimal payout)
         {
@@ -132,7 +146,7 @@
                 TradingWindowId = tradingWindowId,
                 Type = betType,
                 EntryFee = entryFee,
-                BarrierIndex = barrierIndex,
+                BarrierIndex = barrier,
                 Payout = payout,
             };
 

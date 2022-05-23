@@ -55,8 +55,8 @@
             var currencyPairs = currencyPairNames
                 .SelectMany(kvp => kvp.Value.Select(to => new CurrencyPair
                 {
-                    LeftId = currencies[kvp.Key],
-                    RightId = currencies[to],
+                    CurrencyFromId = currencies[kvp.Key],
+                    CurrencyToId = currencies[to],
                     Display = true,
                 }))
                 .ToArray();

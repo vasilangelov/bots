@@ -4,9 +4,9 @@
 
     public static class UserClaimsExtensions
     {
-        public static string GetUserId(this ClaimsPrincipal userClaims)
+        public static Guid GetUserId(this ClaimsPrincipal userClaims)
         {
-            return userClaims.FindFirstValue(ClaimTypes.NameIdentifier);
+            return Guid.Parse(userClaims.FindFirstValue(ClaimTypes.NameIdentifier));
         }
     }
 }

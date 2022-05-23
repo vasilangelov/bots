@@ -9,7 +9,7 @@
     public class UpdateUserPresetInputModel : IMapFrom<UserPreset>, IMapTo<UserPreset>
     {
         [Required]
-        public string Id { get; set; } = default!;
+        public Guid Id { get; set; } = default!;
 
         [BindNever]
         public bool IsActive { get; set; }

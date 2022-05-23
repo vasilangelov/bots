@@ -1,22 +1,28 @@
 ﻿namespace BOTS.Web.BackgroundServices
 {
     using BOTS.Common;
-    using BOTS.Services.Currencies;
+    using BOTS.Services.Currencies.CurrencyRates;
 
     public class CurrencyRateGeneratorBackgroundService : BackgroundService
     {
-        private readonly ICurrencyRateGeneratorService currencyRateGeneratorService;
+        private readonly IServiceProvider serviceProvider;
 
-        public CurrencyRateGeneratorBackgroundService(ICurrencyRateGeneratorService currencyRateGeneratorService)
+        public CurrencyRateGeneratorBackgroundService(IServiceProvider serviceProvider)
         {
-            this.currencyRateGeneratorService = currencyRateGeneratorService;
+            this.serviceProvider = serviceProvider;
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                this.currencyRateGeneratorService.UpdateCurrencyRates();
+                using (var scope = serviceProvider.CreateScope())
+                {
+                    var currencyRateGenerator =
+                        scope.ServiceProvider.GetRequiredService<ICurrencyRateGeneratorService>();
+
+                    currencyRateGenerator.UpdateCurrencyRates();
+                }
 
                 await Task.Delay(GlobalConstants.CurrencyRateUpdateFrequency, cancellationToken);
             }

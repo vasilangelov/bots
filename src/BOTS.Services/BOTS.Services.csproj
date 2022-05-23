@@ -8,8 +8,10 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="11.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+    <PackageReference Include="Scrutor" Version="4.1.0" />
     <PackageReference Include="System.Collections.Concurrent" Version="4.3.0" />
   </ItemGroup>
 
@@ -17,7 +19,7 @@
     <ProjectReference Include="..\BOTS.Common\BOTS.Common.csproj" />
     <ProjectReference Include="..\BOTS.Data\BOTS.Data.csproj" />
     <ProjectReference Include="..\BOTS.Services.Infrastructure\BOTS.Services.Infrastructure.csproj" />
-    <ProjectReference Include="..\BOTS.Services.Models\BOTS.Services.Models.csproj" />
+    <ProjectReference Include="..\BOTS.Services.Mapping\BOTS.Services.Mapping.csproj" />
   </ItemGroup>
 
 </Project>

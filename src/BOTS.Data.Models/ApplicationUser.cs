@@ -3,7 +3,7 @@
     using Microsoft.AspNetCore.Identity;
     using System.ComponentModel.DataAnnotations.Schema;
 
-    public class ApplicationUser : IdentityUser
+    public class ApplicationUser : IdentityUser<Guid>
     {
         [Column(TypeName = "money")]
         public decimal Balance { get; set; }

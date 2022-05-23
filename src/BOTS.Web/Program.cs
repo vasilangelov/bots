@@ -1,23 +1,20 @@
 using System.Text.Json.Serialization;
-using Microsoft.EntityFrameworkCore;
 
 using BOTS.Data;
+using BOTS.Data.Infrastructure.Repositories.EntityFramework;
+using BOTS.Data.Infrastructure.Transactions;
+using BOTS.Data.Infrastructure.Transactions.EntityFramework;
 using BOTS.Data.Models;
+using BOTS.Data.Repositories;
+using BOTS.Services;
+using BOTS.Services.Currencies.CurrencyRates;
+using BOTS.Services.Mapping;
 using BOTS.Web.BackgroundServices;
 using BOTS.Web.Extensions;
-using BOTS.Services.Models;
 using BOTS.Web.Hubs;
-using BOTS.Services.Data.Common;
-using BOTS.Services.Data.CurrencyPairs;
-using BOTS.Services.Data.TradingWindows;
-using BOTS.Services.Mapping;
-using BOTS.Services.Data.Nationalities;
-using BOTS.Services.Currencies;
-using BOTS.Services.Data.Bets;
-using BOTS.Services.Data.Users;
 using BOTS.Web.Models.ViewModels;
-using BOTS.Services.Data.UserPresets;
-using BOTS.Services.Data.ApplicationSettings;
+
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,15 +35,21 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         .UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
-{
-    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._";
-    options.User.RequireUniqueEmail = true;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = false;
+builder.Services.AddScoped(typeof(IRepository<>), typeof(EntityFrameworkRepository<>));
+builder.Services.AddScoped<ITransactionManager, EntityFrameworkTransactionManager>();
 
-}).AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services
+    .AddDefaultIdentity<ApplicationUser>(options =>
+    {
+        options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._";
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+
+    })
+    .AddRoles<ApplicationRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services
     .AddSignalR()
@@ -60,34 +63,24 @@ builder.Services.AddHttpClient<ThirdPartyCurrencyRateProviderService>();
 
 builder.Services.AddHostedService<CurrencyRateGeneratorBackgroundService>();
 builder.Services.AddHostedService<CurrencyRateBackgroundService>();
-builder.Services.AddHostedService<TradingWindowBackgroundService>();
+builder.Services.AddHostedService<BettingOptionBackgroundService>();
 builder.Services.AddHostedService<CurrencyRateStatBackgroundService>();
 
-builder.Services.AddAutoMapper(typeof(ErrorViewModel).Assembly, typeof(TradingWindowOptionInfo).Assembly);
+builder.Services.RegisterServiceLayer();
 
-builder.Services.AddTransient(typeof(IRepository<>), typeof(Repository<>));
-builder.Services.AddTransient<IApplicationSettingService, ApplicationSettingService>();
-builder.Services.AddTransient<INationalityService, NationalityService>();
-builder.Services.AddTransient<ICurrencyPairService, CurrencyPairService>();
-builder.Services.AddTransient<ITradingWindowService, TradingWindowService>();
-builder.Services.AddTransient<ITradingWindowOptionService, TradingWindowOptionService>();
-builder.Services.AddTransient<IBetService, BetService>();
-builder.Services.AddTransient<IUserService, UserService>();
-builder.Services.AddTransient<IUserPresetService, UserPresetService>();
-builder.Services.AddTransient<ThirdPartyCurrencyRateProviderService>();
+// TODO: register service layer logic...
 
-builder.Services.AddSingleton<ICurrencyRateProviderService, CurrencyGeneratorService>();
-builder.Services.AddSingleton<ICurrencyRateGeneratorService>(x => (ICurrencyRateGeneratorService)x.GetRequiredService<ICurrencyRateProviderService>());
-builder.Services.AddSingleton<ICurrencyRateStatProviderService, CurrencyRateStatGeneratorService>();
+builder.Services.AddAutoMapper(typeof(ErrorViewModel).Assembly);
 
-// Configure pipeline...
 var app = builder.Build();
 
+// Setup application initials...
 await app.MigrateDatabaseAsync();
 await app.SeedDatabaseAsync();
 
 await app.SeedCurrenciesAsync();
 
+// Configure pipeline...
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -111,7 +104,7 @@ app.UseEndpoints(app =>
 {
     app.MapDefaultControllerRoute();
     app.MapRazorPages();
-    app.MapHub<CurrencyHub>("/Currencies/Live");
+    app.MapHub<TradingHub>("/Currencies/Live");
 });
 
 app.Run();

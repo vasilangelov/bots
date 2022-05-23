@@ -1,9 +1,10 @@
 ﻿namespace BOTS.Web.Controllers
 {
-    using Microsoft.AspNetCore.Mvc;
     using System.Diagnostics;
 
     using BOTS.Web.Models.ViewModels;
+
+    using Microsoft.AspNetCore.Mvc;
 
     public class HomeController : Controller
     {

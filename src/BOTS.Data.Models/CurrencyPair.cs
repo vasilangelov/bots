@@ -4,17 +4,20 @@
     {
         public int Id { get; set; }
 
-        public int LeftId { get; set; }
+        public int CurrencyFromId { get; set; }
 
-        public virtual Currency Left { get; set; } = default!;
+        public virtual Currency CurrencyFrom { get; set; } = default!;
 
-        public int RightId { get; set; }
+        public int CurrencyToId { get; set; }
 
-        public virtual Currency Right { get; set; } = default!;
+        public virtual Currency CurrencyTo { get; set; } = default!;
 
         public bool Display { get; set; }
 
         public virtual ICollection<TradingWindow> TradingWindows { get; set; }
             = new HashSet<TradingWindow>();
+
+        public virtual ICollection<BettingOptionPreset> BettingOptionPresets { get; set; }
+            = new HashSet<BettingOptionPreset>();
     }
 }

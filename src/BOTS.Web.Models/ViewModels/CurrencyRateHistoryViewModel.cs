@@ -2,7 +2,7 @@
 {
     using AutoMapper;
 
-    using BOTS.Services.Currencies.Models;
+    using BOTS.Services.CurrencyRateStats.Models;
     using BOTS.Services.Mapping;
 
     public class CurrencyRateHistoryViewModel : ICustomMap
@@ -19,7 +19,7 @@
 
         public void ConfigureMap(IProfileExpression configuration)
         {
-            configuration.CreateMap<CurrencyRateHistory, CurrencyRateHistoryViewModel>()
+            configuration.CreateMap<CurrencyRateStat, CurrencyRateHistoryViewModel>()
                 .ForMember(
                 x => x.Time,
                 x => x.MapFrom(y => DateTime.SpecifyKind(y.Time, DateTimeKind.Utc).ToString("O")));

@@ -2,8 +2,6 @@
 {
     public interface ITradingWindowService
     {
-        decimal CalculateBarrier(byte barrierIndex, int barrierCount, decimal openingPrice, decimal barrierStep);
-
         Task<IEnumerable<T>> GetActiveTradingWindowsByCurrencyPairAsync<T>(int currencyPairId);
 
         Task<T> GetTradingWindowAsync<T>(string tradingWindowId);
@@ -20,5 +18,7 @@
             string tradingWindowId,
             BetType betType,
             byte barrierIndex);
+
+        Task<decimal?> GetBarrierAsync(string tradingWindowId, byte barrierIndex);
     }
 }

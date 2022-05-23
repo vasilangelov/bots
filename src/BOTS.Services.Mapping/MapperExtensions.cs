@@ -1,8 +1,10 @@
 ﻿namespace BOTS.Services.Mapping
 {
-    using AutoMapper;
-    using Microsoft.Extensions.DependencyInjection;
     using System.Reflection;
+
+    using AutoMapper;
+
+    using Microsoft.Extensions.DependencyInjection;
 
     public static class MapperExtensions
     {

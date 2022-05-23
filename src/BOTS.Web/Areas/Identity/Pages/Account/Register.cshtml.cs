@@ -2,21 +2,21 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
+using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Encodings.Web;
+
+using BOTS.Data.Models;
+using BOTS.Services.ApplicationSettings;
+using BOTS.Services.Nationalities;
+using BOTS.Web.Models.ViewModels;
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
-using System.Text.Encodings.Web;
-
-using BOTS.Data.Models;
-using BOTS.Services;
-using BOTS.Services.Data.Nationalities;
-using BOTS.Services.Data.ApplicationSettings;
-using BOTS.Web.Models.ViewModels;
 
 namespace BOTS.Web.Areas.Identity.Pages.Account
 {
