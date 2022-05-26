@@ -26,11 +26,23 @@
         public IQueryable<T> AllAsNotracking()
             => this.dbSet.AsNoTracking();
 
+        public async Task<T?> GetById(object id)
+            => await this.dbSet.FindAsync(id);
+
         public async Task AddAsync(T item)
             => await this.dbSet.AddAsync(item);
 
         public void Update(T item)
-            => this.dbSet.Update(item);
+        {
+            var entry = this.dbContext.Entry(item);
+
+            if (entry.State == EntityState.Detached)
+            {
+                this.dbSet.Attach(item);
+            }
+
+            entry.State = EntityState.Modified;
+        }
 
         public void Patch(T item, params Expression<Func<T, object>>[] includeProperties)
         {

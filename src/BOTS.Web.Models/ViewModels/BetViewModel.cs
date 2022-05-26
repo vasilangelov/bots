@@ -9,6 +9,8 @@
     {
         public Guid Id { get; set; } = default!;
 
+        public Guid TradingWindowId { get; set; }
+
         public string Type { get; set; } = default!;
 
         public string CurrencyPair { get; set; } = default!;
@@ -30,7 +32,10 @@
                 )
                 .ForMember(
                     x => x.EndsOn,
-                    opt => opt.MapFrom(y => DateTime.SpecifyKind(y.BettingOption.TradingWindow.End, DateTimeKind.Utc).ToString("O")));
+                    opt => opt.MapFrom(y => DateTime.SpecifyKind(y.BettingOption.TradingWindow.End, DateTimeKind.Utc).ToString("O")))
+                .ForMember(
+                    x => x.TradingWindowId,
+                    opt => opt.MapFrom(y => y.BettingOption.TradingWindowId));
         }
     }
 }

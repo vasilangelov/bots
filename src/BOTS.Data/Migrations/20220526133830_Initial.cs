@@ -77,6 +77,21 @@ namespace BOTS.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TradingWindows",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    IsClosed = table.Column<bool>(type: "bit", nullable: false),
+                    Start = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    End = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Duration = table.Column<TimeSpan>(type: "time", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TradingWindows", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -182,24 +197,31 @@ namespace BOTS.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TradingWindows",
+                name: "BettingOptions",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    IsClosed = table.Column<bool>(type: "bit", nullable: false),
-                    Start = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    End = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Duration = table.Column<TimeSpan>(type: "time", nullable: false),
-                    CurrencyPairId = table.Column<int>(type: "int", nullable: true)
+                    CurrencyPairId = table.Column<int>(type: "int", nullable: false),
+                    TradingWindowId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CloseValue = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: true),
+                    BarrierStep = table.Column<decimal>(type: "money", nullable: false),
+                    Barriers = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TradingWindows", x => x.Id);
+                    table.PrimaryKey("PK_BettingOptions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TradingWindows_CurrencyPairs_CurrencyPairId",
+                        name: "FK_BettingOptions_CurrencyPairs_CurrencyPairId",
                         column: x => x.CurrencyPairId,
                         principalTable: "CurrencyPairs",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BettingOptions_TradingWindows_TradingWindowId",
+                        column: x => x.TradingWindowId,
+                        principalTable: "TradingWindows",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -312,34 +334,6 @@ namespace BOTS.Data.Migrations
                         name: "FK_UserPresets_CurrencyPairs_CurrencyPairId",
                         column: x => x.CurrencyPairId,
                         principalTable: "CurrencyPairs",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "BettingOptions",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CurrencyPairId = table.Column<int>(type: "int", nullable: false),
-                    TradingWindowId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CloseValue = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: true),
-                    BarrierStep = table.Column<decimal>(type: "money", nullable: false),
-                    Barriers = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_BettingOptions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_BettingOptions_CurrencyPairs_CurrencyPairId",
-                        column: x => x.CurrencyPairId,
-                        principalTable: "CurrencyPairs",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_BettingOptions_TradingWindows_TradingWindowId",
-                        column: x => x.TradingWindowId,
-                        principalTable: "TradingWindows",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -461,11 +455,6 @@ namespace BOTS.Data.Migrations
                 column: "CurrencyToId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TradingWindows_CurrencyPairId",
-                table: "TradingWindows",
-                column: "CurrencyPairId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_UserPresets_CurrencyPairId",
                 table: "UserPresets",
                 column: "CurrencyPairId");
@@ -518,13 +507,13 @@ namespace BOTS.Data.Migrations
                 name: "AspNetUsers");
 
             migrationBuilder.DropTable(
+                name: "CurrencyPairs");
+
+            migrationBuilder.DropTable(
                 name: "TradingWindows");
 
             migrationBuilder.DropTable(
                 name: "Nationalities");
-
-            migrationBuilder.DropTable(
-                name: "CurrencyPairs");
 
             migrationBuilder.DropTable(
                 name: "Currencies");

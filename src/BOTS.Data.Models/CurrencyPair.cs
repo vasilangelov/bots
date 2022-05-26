@@ -14,9 +14,6 @@
 
         public bool Display { get; set; }
 
-        public virtual ICollection<TradingWindow> TradingWindows { get; set; }
-            = new HashSet<TradingWindow>();
-
         public virtual ICollection<BettingOptionPreset> BettingOptionPresets { get; set; }
             = new HashSet<BettingOptionPreset>();
     }

@@ -59,7 +59,7 @@
         {
             foreach (var currencyPair in currencyRates.Keys)
             {
-                currencyRates[currencyPair] = GenerateCurrencyRate(rnd, currencyRates[currencyPair], MinCurrencyRateOffset, MaxCurrencyRateOffset);
+                currencyRates[currencyPair] = decimal.Round(GenerateCurrencyRate(rnd, currencyRates[currencyPair], MinCurrencyRateOffset, MaxCurrencyRateOffset), DecimalPlacePrecision);
             }
         }
 

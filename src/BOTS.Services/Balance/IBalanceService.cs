@@ -2,10 +2,10 @@
 {
     public interface IBalanceService
     {
-        Task<decimal> GetBalanceAsync(Guid userId);
+        Task AddToBalanceAsync(Guid userId, decimal amount);
 
-        Task<bool> AddToBalanceAsync(Guid userId, decimal amount);
+        Task SubtractFromBalanceAsync(Guid userId, decimal amount);
 
-        Task<bool> SubtractFromBalanceAsync(Guid userId, decimal amount);
+        Task<bool> HasEnoughBalanceAsync(Guid userId, decimal amount);
     }
 }

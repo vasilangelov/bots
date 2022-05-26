@@ -25,11 +25,13 @@ function addCurrencySubscription() {
 
     connection.invoke('AddCurrencyRateSubscription', currentCurrencyPair)
         .then(() => {
-            connection.invoke('RemoveBettingOptionSubscription', currentSubscribedBettingOption)
-                .then(() => {
-                    currentSubscribedBettingOption = undefined;
-                })
-                .then(requestBettingOptionsForCurrencyPair);
+            if (currentSubscribedBettingOption !== undefined) {
+                connection.invoke('RemoveBettingOptionSubscription', currentSubscribedBettingOption)
+                    .then(() => {
+                        currentSubscribedBettingOption = undefined;
+                    })
+                    .then(requestBettingOptionsForCurrencyPair);
+            }
         })
 }
 
@@ -44,6 +46,10 @@ function requestBettingOptionsForCurrencyPair() {
 
 function requestActiveBets() {
     connection.invoke('GetActiveBets');
+}
+
+function updateBarriers() {
+    connection.invoke('GetBarriers', currentSubscribedBettingOption);
 }
 
 function changeButtonPrice(btn, payout, value) {
@@ -98,11 +104,10 @@ function renderBarriers() {
     });
 }
 
-// TODO: when remove rendered bet???
 function renderBets() {
     portfolioContainer.innerHTML = '';
 
-    activeBets.forEach(bet => {
+    for (const bet of activeBets) {
         const tr = el('tr');
 
         tr.appendChild(el('td', { textContent: bet.id }));
@@ -111,11 +116,11 @@ function renderBets() {
         tr.appendChild(el('td', { textContent: bet.payout.toFixed(2) }));
 
         portfolioContainer.appendChild(tr);
-    });
+    }
 }
 
 connection.on('UpdateCurrencyRate', (cr) => {
-    currencyRateDiv.textContent = cr;
+    currencyRateDiv.textContent = cr.toFixed(6);
 });
 
 connection.on('UpdateTimer', (end) => {
@@ -170,7 +175,7 @@ connection.on('SetBettingOptions', (bettingOptions) => {
 
         currentSubscribedBettingOption = id;
         barrierContainer.innerHTML = '';
-        connection.invoke('AddBettingOptionSubscription', id);
+        connection.invoke('AddBettingOptionSubscription', id).then(updateBarriers);
     }
 });
 
@@ -182,11 +187,19 @@ connection.on('UpdateBarriers', (bettingOptions) => {
 
 connection.on('DisplayBet', (betInfo) => {
     activeBets.push(betInfo);
+
     renderBets();
 });
 
 connection.on('SetActiveBets', (bets) => {
     activeBets = bets;
+
+    renderBets();
+});
+
+connection.on('RemoveEndedBet', (id) => {
+    activeBets = activeBets.filter(bet => bet.tradingWindowId !== id);
+
     renderBets();
 });
 
@@ -216,7 +229,7 @@ bettingOptionsSelect.addEventListener('change', () => {
 
     currentSubscribedBettingOption = id;
     barrierContainer.innerHTML = '';
-    connection.invoke('AddBettingOptionSubscription', id);
+    connection.invoke('AddBettingOptionSubscription', id).then(updateBarriers);
 });
 
 payoutInput.addEventListener('input', (e) => {
@@ -233,6 +246,6 @@ barrierContainer.addEventListener('click', (e) => {
     if (e.target instanceof HTMLButtonElement) {
         const { barrierValue, prediction } = e.target.dataset;
 
-        connection.invoke('PlaceBettingOptionBet', bettingOptionsSelect.value, prediction, Number(barrierValue), payout);
+        connection.invoke('PlaceBet', bettingOptionsSelect.value, prediction, Number(barrierValue), payout);
     }
 });

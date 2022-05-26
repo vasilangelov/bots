@@ -87,14 +87,6 @@
 
                 var entryFee = payout * entryPercentage;
 
-                bool hasEnoughBalance =
-                    await this.balanceService.SubtractFromBalanceAsync(userId, entryFee);
-
-                if (!hasEnoughBalance)
-                {
-                    throw new InvalidOperationException("User does not have enough balance");
-                }
-
                 bool hasActiveCurrencyPairBet =
                     await this.HasActiveUserCurrencyPairBet(userId, bettingOption.CurrencyPairId);
 
@@ -109,6 +101,15 @@
                 {
                     throw new InvalidOperationException("Trading window is closed");
                 }
+
+                bool hasEnoughBalance = await this.balanceService.HasEnoughBalanceAsync(userId, entryFee);
+
+                if (!hasEnoughBalance)
+                {
+                    throw new InvalidOperationException("User does not have enough balance");
+                }
+
+                await this.balanceService.SubtractFromBalanceAsync(userId, entryFee);
 
                 var result = await this.AddBetAsync<T>(userId,
                                                        bettingOptionId,

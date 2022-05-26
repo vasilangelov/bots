@@ -5,7 +5,7 @@
     using BOTS.Services.Currencies.CurrencyRates;
     using BOTS.Services.Trades.Bets;
     using BOTS.Services.Trades.TradingWindows;
-    using BOTS.Web.Hubs;
+    using BOTS.Web.Hubs.Trading;
     using BOTS.Web.Models.ViewModels;
 
     using Microsoft.AspNetCore.SignalR;

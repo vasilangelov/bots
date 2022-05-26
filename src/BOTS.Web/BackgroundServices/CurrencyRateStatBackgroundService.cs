@@ -6,7 +6,7 @@
     using BOTS.Common;
     using BOTS.Services.Currencies.CurrencyRates;
     using BOTS.Services.CurrencyRateStats;
-    using BOTS.Web.Hubs;
+    using BOTS.Web.Hubs.Trading;
     using BOTS.Web.Models.ViewModels;
 
     using Microsoft.AspNetCore.SignalR;

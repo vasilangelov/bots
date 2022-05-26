@@ -10,6 +10,10 @@
             = new TradingWindowPreset[] {
                 new TradingWindowPreset
                 {
+                    Duration = TimeSpan.FromMinutes(1),
+                },
+                new TradingWindowPreset
+                {
                     Duration = TimeSpan.FromMinutes(10),
                 },
                 new TradingWindowPreset

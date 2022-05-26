@@ -2,7 +2,7 @@
 {
     using BOTS.Common;
     using BOTS.Services.Currencies.CurrencyRates;
-    using BOTS.Web.Hubs;
+    using BOTS.Web.Hubs.Trading;
 
     using Microsoft.AspNetCore.SignalR;
 

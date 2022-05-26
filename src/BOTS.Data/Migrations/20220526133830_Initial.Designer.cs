@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BOTS.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20220523181145_Initial")]
+    [Migration("20220526133830_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -306,9 +306,6 @@ namespace BOTS.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int?>("CurrencyPairId")
-                        .HasColumnType("int");
-
                     b.Property<TimeSpan>("Duration")
                         .HasColumnType("time");
 
@@ -322,8 +319,6 @@ namespace BOTS.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CurrencyPairId");
 
                     b.ToTable("TradingWindows");
                 });
@@ -572,13 +567,6 @@ namespace BOTS.Data.Migrations
                     b.Navigation("CurrencyTo");
                 });
 
-            modelBuilder.Entity("BOTS.Data.Models.TradingWindow", b =>
-                {
-                    b.HasOne("BOTS.Data.Models.CurrencyPair", null)
-                        .WithMany("TradingWindows")
-                        .HasForeignKey("CurrencyPairId");
-                });
-
             modelBuilder.Entity("BOTS.Data.Models.UserPreset", b =>
                 {
                     b.HasOne("BOTS.Data.Models.CurrencyPair", "CurrencyPair")
@@ -671,8 +659,6 @@ namespace BOTS.Data.Migrations
             modelBuilder.Entity("BOTS.Data.Models.CurrencyPair", b =>
                 {
                     b.Navigation("BettingOptionPresets");
-
-                    b.Navigation("TradingWindows");
                 });
 
             modelBuilder.Entity("BOTS.Data.Models.Nationality", b =>

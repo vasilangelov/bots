@@ -55,7 +55,7 @@
             => await this.userPresetRepository
                             .AllAsNotracking()
                             .Where(x => x.OwnerId == userId && x.IsActive)
-                            .Select(x => x.Id)
+                            .Select(x => x.Id as Guid?)
                             .FirstOrDefaultAsync();
 
         public async Task<IEnumerable<T>> GetUserPresetsAsync<T>(Guid userId)

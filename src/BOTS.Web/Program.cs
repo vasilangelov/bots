@@ -7,11 +7,15 @@ using BOTS.Data.Infrastructure.Transactions.EntityFramework;
 using BOTS.Data.Models;
 using BOTS.Data.Repositories;
 using BOTS.Services;
+using BOTS.Services.Balance.Events;
 using BOTS.Services.Currencies.CurrencyRates;
+using BOTS.Services.Infrastructure.Events;
 using BOTS.Services.Mapping;
+using BOTS.Services.Trades.TradingWindows.Events;
 using BOTS.Web.BackgroundServices;
 using BOTS.Web.Extensions;
-using BOTS.Web.Hubs;
+using BOTS.Web.Hubs.Trading;
+using BOTS.Web.Hubs.Trading.Events;
 using BOTS.Web.Models.ViewModels;
 
 using Microsoft.EntityFrameworkCore;
@@ -68,6 +72,8 @@ builder.Services.AddHostedService<CurrencyRateStatBackgroundService>();
 
 builder.Services.RegisterServiceLayer();
 
+builder.Services.AddSingleton(typeof(IEventManager<>), typeof(EventManager<>));
+
 // TODO: register service layer logic...
 
 builder.Services.AddAutoMapper(typeof(ErrorViewModel).Assembly);
@@ -104,7 +110,16 @@ app.UseEndpoints(app =>
 {
     app.MapDefaultControllerRoute();
     app.MapRazorPages();
-    app.MapHub<TradingHub>("/Currencies/Live");
+    app.MapHub<TradingHub>("/Currencies/Live", (options) =>
+    {
+        var balanceEventManager = app.ServiceProvider.GetRequiredService<IEventManager<UpdateBalanceEvent>>();
+
+        balanceEventManager.Subscribe<UpdateBalanceEventHandler>();
+
+        var tradingWindowEventManager = app.ServiceProvider.GetRequiredService<IEventManager<TradingWindowClosedEvent>>();
+
+        tradingWindowEventManager.Subscribe<TradingWindowClosedEventHandler>();
+    });
 });
 
 app.Run();

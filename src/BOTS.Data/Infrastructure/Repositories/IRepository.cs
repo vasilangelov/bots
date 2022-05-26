@@ -9,6 +9,8 @@
 
         IQueryable<T> AllAsNotracking();
 
+        Task<T?> GetById(object id);
+
         Task AddAsync(T item);
 
         void Update(T item);

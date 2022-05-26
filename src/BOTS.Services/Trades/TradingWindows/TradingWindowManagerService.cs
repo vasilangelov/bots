@@ -2,8 +2,10 @@
 {
     using BOTS.Data.Models;
     using BOTS.Services.Common;
+    using BOTS.Services.Infrastructure.Events;
     using BOTS.Services.Infrastructure.Extensions;
     using BOTS.Services.Trades.Bets;
+    using BOTS.Services.Trades.TradingWindows.Events;
 
     using Microsoft.Extensions.Caching.Memory;
 
@@ -17,6 +19,7 @@
         private readonly IRepository<BettingOptionPreset> bettingOptionPresetRepository;
         private readonly IBettingOptionService bettingOptionService;
         private readonly IBetService betService;
+        private readonly IEventManager<TradingWindowClosedEvent> tradingWindowEventManager;
         private readonly IMemoryCache memoryCache;
 
         public TradingWindowManagerService(
@@ -24,12 +27,14 @@
             IRepository<BettingOptionPreset> bettingOptionPresetRepository,
             IBettingOptionService bettingOptionService,
             IBetService betService,
+            IEventManager<TradingWindowClosedEvent> tradingWindowEventManager,
             IMemoryCache memoryCache)
         {
             this.tradingWindowRepository = tradingWindowRepository;
             this.bettingOptionPresetRepository = bettingOptionPresetRepository;
             this.bettingOptionService = bettingOptionService;
             this.betService = betService;
+            this.tradingWindowEventManager = tradingWindowEventManager;
             this.memoryCache = memoryCache;
         }
 
@@ -47,6 +52,13 @@
                 await this.CloseTradingWindowAsync(endedWindow.Id, endedWindow.End);
 
                 tradingWindows.Remove(endedWindow);
+
+                var context = new TradingWindowClosedEvent
+                {
+                    TradingWindowId = endedWindow.Id,
+                };
+
+                await this.tradingWindowEventManager.EmitAsync(context);
             }
 
             var bettingOptionPresets = this.GetBettingOptionPresetsAsync();

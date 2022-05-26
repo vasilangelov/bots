@@ -1,4 +1,5 @@
 ﻿const xPeriod = 3000;
+const maxData = 10;
 let chart;
 let timeRange;
 
@@ -52,14 +53,20 @@ connection.on('SetCurrencyRateHistory', (histories) => {
         trace.close.push(close);
     });
 
-    timeRange = [trace.x[0], trace.x[trace.x.length - 1]];
+    const endDate = Date.fromPlotlyFormat(trace.x[trace.x.length - 1]);
+
+    endDate.setMilliseconds(endDate.getMilliseconds() + xPeriod);
+
+    timeRange = [trace.x[trace.x.length - 1 - maxData], endDate.toPlotlyFormat()];
+
+    layout.xaxis.range = timeRange;
 
     Plotly.react('chart', data, layout, { responsive: true });
 
     if (!chart) {
         chart = document.getElementById('chart');
 
-        let intervalHandle;
+        let timeoutHandle;
         let lastEventData;
 
         chart.on('plotly_relayout', (e) => {
@@ -69,27 +76,29 @@ connection.on('SetCurrencyRateHistory', (histories) => {
 
             lastEventData = e;
 
-            if (intervalHandle !== undefined) {
-                clearTimeout(intervalHandle);
-                intervalHandle = undefined;
+            if (timeoutHandle !== undefined) {
+                clearTimeout(timeoutHandle);
+                timeoutHandle = undefined;
             }
 
-            intervalHandle = setTimeout(() => {
+            timeoutHandle = setTimeout(() => {
                 let from, to;
 
                 if (typeof lastEventData['xaxsis.range[0]'] === 'string' &&
                     typeof lastEventData['xaxsis.range[1]'] === 'string') {
-                    from = lastEventData["xaxis.range[0]"];
-                    to = lastEventData["xaxis.range[1]"];
+                    from = lastEventData['xaxis.range[0]'];
+                    to = lastEventData['xaxis.range[1]'];
                 } else if (Array.isArray(lastEventData['xaxis.range'])) {
                     const [fromString, toString] = lastEventData['xaxis.range'];
                     from = fromString;
                     to = toString;
+                } else {
+                    return;
                 }
 
                 timeRange = [from, to];
 
-                intervalHandle = undefined;
+                timeoutHandle = undefined;
             }, 500);
         });
     }

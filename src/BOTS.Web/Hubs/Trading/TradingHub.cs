@@ -1,10 +1,9 @@
-﻿namespace BOTS.Web.Hubs
+﻿namespace BOTS.Web.Hubs.Trading
 {
     using System.Threading.Tasks;
 
     using BOTS.Common;
     using BOTS.Data.Models;
-    using BOTS.Services.Balance;
     using BOTS.Services.Currencies.CurrencyRates;
     using BOTS.Services.CurrencyRateStats;
     using BOTS.Services.Trades.Bets;
@@ -13,6 +12,8 @@
 
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.SignalR;
+
+    using static BOTS.Services.Trades.Bets.BarrierActions;
 
     [Authorize]
     public class TradingHub : Hub
@@ -94,7 +95,7 @@
                 .RemoveFromGroupAsync(this.Context.ConnectionId, bettingOptionId.ToString());
         }
 
-        public async Task PlaceBettingOptionBet(
+        public async Task PlaceBet(
             // TODO: input model...
             Guid bettingOptionId,
             BetType betType,
@@ -113,21 +114,13 @@
 
             var betService = scope.ServiceProvider.GetRequiredService<IBetService>();
 
-            var betViewModel =
-                await betService.PlaceBetAsync<BetViewModel>(
-                    userId.Value,
-                    bettingOptionId,
-                    betType,
-                    barrier,
-                    payout);
+            var betViewModel = await betService.PlaceBetAsync<BetViewModel>(userId.Value,
+                                                                            bettingOptionId,
+                                                                            betType,
+                                                                            barrier,
+                                                                            payout);
 
             await this.Clients.Caller.SendAsync("DisplayBet", betViewModel);
-
-            var userService = scope.ServiceProvider.GetRequiredService<IBalanceService>();
-
-            decimal balance = await userService.GetBalanceAsync(userId.Value);
-
-            await this.Clients.Caller.SendAsync("UpdateBalance", balance);
         }
 
         public async Task GetActiveBets()
@@ -160,6 +153,57 @@
                 .GetActiveBettingOptionsForCurrencyPairAsync<BettingOptionViewModel>(currencyPairId);
 
             await this.Clients.Caller.SendAsync("SetBettingOptions", model);
+        }
+
+        public async Task GetBarriers(Guid bettingOptionId)
+        {
+            var now = DateTime.UtcNow;
+
+            using var scope = this.serviceProvider.CreateAsyncScope();
+
+            var bettingOptionService = scope.ServiceProvider.GetRequiredService<IBettingOptionService>();
+
+            bool isBettingOptionActive = await bettingOptionService.IsBettingOptionActiveAsync(bettingOptionId);
+
+            if (!isBettingOptionActive)
+            {
+                // TODO: display error message
+                return;
+            }
+
+            var bettingOption = await bettingOptionService.GetBettingOptionAsync<BettingOptionDto>(bettingOptionId);
+
+            var currencyRateProviderService = scope.ServiceProvider.GetRequiredService<ICurrencyRateProviderService>();
+
+            decimal currencyRate = await currencyRateProviderService
+                .GetCurrencyRateAsync(bettingOption.CurrencyPairId);
+
+            var remainingTime = (long)bettingOption.End.Subtract(now).TotalSeconds;
+
+            var model = bettingOption.Barriers
+                .Select(barrier => new BarrierViewModel
+                {
+                    Barrier = barrier,
+                    High = GetEntryPercentage(bettingOption.Barriers,
+                                              barrier,
+                                              bettingOption.BarrierStep,
+                                              currencyRate,
+                                              remainingTime,
+                                              bettingOption.Duration,
+                                              BetType.Higher),
+                    Low = GetEntryPercentage(bettingOption.Barriers,
+                                             barrier,
+                                             bettingOption.BarrierStep,
+                                             currencyRate,
+                                             remainingTime,
+                                             bettingOption.Duration,
+                                             BetType.Lower)
+                })
+                .ToArray();
+
+            await this.Clients
+                .Caller
+                .SendAsync("UpdateBarriers", model);
         }
     }
 }
