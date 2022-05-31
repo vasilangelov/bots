@@ -1,6 +1,7 @@
 ﻿namespace BOTS.Web.Controllers
 {
     using BOTS.Services.Currencies.CurrencyRates;
+    using BOTS.Services.Trades.Bets;
     using BOTS.Services.UserPresets;
     using BOTS.Web.Extensions;
     using BOTS.Web.Models.InputModels;
@@ -13,16 +14,20 @@
     public class TradesController : Controller
     {
         private readonly ICurrencyPairService currencyPairService;
+        private readonly IBetService betService;
         private readonly IUserPresetService userPresetService;
 
         public TradesController(
             ICurrencyPairService currencyPairService,
+            IBetService betService,
             IUserPresetService userPresetService)
         {
             this.currencyPairService = currencyPairService;
+            this.betService = betService;
             this.userPresetService = userPresetService;
         }
 
+        [HttpGet]
         public async Task<IActionResult> Live()
         {
             var userId = this.User.GetUserId();
@@ -32,6 +37,43 @@
                 CurrencyPairs = await this.currencyPairService
                                           .GetActiveCurrencyPairsAsync<CurrencyPairSelectViewModel>(),
                 Preset = await this.userPresetService.GetActiveUserPresetOrDefaultAsync<DisplayUserPresetViewModel>(userId)
+            };
+
+            return this.View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> History(int? pageIndex, int? perPage)
+        {
+            pageIndex ??= 1;
+
+            var userId = this.User.GetUserId();
+
+            if (!perPage.HasValue || (perPage <= 0 || 20 <= perPage))
+            {
+                perPage = 10;
+            }
+
+            var pageCount = await this.betService.GetUserHistoryPageCount(userId, perPage.Value);
+
+            if (pageIndex < 1 || pageCount < pageIndex)
+            {
+                return this.RedirectToAction(nameof(this.History), new { PageIndex = 1, perPage });
+            }
+
+            var skipCount = ((pageIndex - 1) * perPage)!.Value;
+
+            var userHistory = await this.betService.GetUserBetHistoryAsync<BetHistoryViewModel>(
+                userId,
+                skipCount,
+                perPage!.Value);
+
+            var model = new PaginationViewModel<BetHistoryViewModel>
+            {
+                CurrentPage = pageIndex.Value,
+                ItemsPerPage = perPage.Value,
+                PageCount = pageCount,
+                Items = userHistory,
             };
 
             return this.View(model);

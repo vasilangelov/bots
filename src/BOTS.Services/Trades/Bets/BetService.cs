@@ -44,7 +44,7 @@
             this.mapper = mapper;
         }
 
-        public async Task<IEnumerable<T>> GetActiveBetsAsync<T>(Guid userId)
+        public async Task<IEnumerable<T>> GetActiveUserBetsAsync<T>(Guid userId)
             => await this.betRepository
                          .AllAsNoTracking()
                          .Where(x => x.UserId == userId &&
@@ -175,6 +175,25 @@
             {
                 await this.treasuryService.SubtractUserProfitsAsync(losingBets);
             }
+        }
+
+        public async Task<IEnumerable<T>> GetUserBetHistoryAsync<T>(Guid userId, int skip, int take)
+            => await this.betRepository
+                            .AllAsNoTracking()
+                            .Where(x => x.UserId == userId && x.BettingOption.TradingWindow.IsClosed)
+                            .Skip(skip)
+                            .Take(take)
+                            .ProjectTo<T>(this.mapper.ConfigurationProvider)
+                            .ToArrayAsync();
+
+        public async Task<int> GetUserHistoryPageCount(Guid userId, int itemsPerPage)
+        {
+            var endedBetsCount = await this.betRepository
+                                       .AllAsNoTracking()
+                                       .Where(x => x.UserId == userId && x.BettingOption.TradingWindow.IsClosed)
+                                       .CountAsync();
+
+            return (int)Math.Ceiling(endedBetsCount / (double)itemsPerPage);
         }
 
         private async Task<T> AddBetAsync<T>(

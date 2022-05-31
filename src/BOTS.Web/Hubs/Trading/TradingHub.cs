@@ -137,7 +137,7 @@
 
             var betService = scope.ServiceProvider.GetRequiredService<IBetService>();
 
-            var model = await betService.GetActiveBetsAsync<BetViewModel>(userId.Value);
+            var model = await betService.GetActiveUserBetsAsync<BetViewModel>(userId.Value);
 
             await this.Clients.Caller.SendAsync("SetActiveBets", model);
         }

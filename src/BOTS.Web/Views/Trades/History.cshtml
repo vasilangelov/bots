@@ -1,0 +1,76 @@
+﻿@model PaginationViewModel<BetHistoryViewModel>
+
+@{
+    ViewData["Title"] = "Bet History";
+}
+
+<div class="offset-sm-0 col-sm-12 offset-lg-1 col-lg-10 d-flex flex-column">
+    <h1 class="text-center">Bet History</h1>
+
+    @foreach (var bet in this.Model.Items)
+    {
+        <div class="card my-3">
+            <div class="card-header d-flex justify-content-between px-4 text-center">
+                <div class="w-100">@bet.Id</div>
+                <div class="w-100 "><strong>Bet</strong></div>
+                <div class="w-100 text-end">
+                    @if (bet.IsWinningBet)
+                    {
+                        <span class="badge rounded-pill bg-success">Bet Won</span>
+                    }
+                    else
+                    {
+                        <span class="badge rounded-pill bg-danger">Bet Lost</span>
+                    }
+                </div>
+            </div>
+            <ul class="list-group list-group-flush text-md-start text-center">
+                <li class="list-group-item"><i class="fas fa-id-badge"></i> @bet.CurrencyPair is @bet.Type than @bet.BarrierPrediction</li>
+                <li class="list-group-item"><i class="fas fa-calendar-check"></i> @bet.EndsOn</li>
+                @if (bet.IsWinningBet)
+                {
+                    <li class="list-group-item"><i class="fas fa-dollar-sign"></i> Payout: @bet.Payout.ToString("0.00$")</li>
+                }
+                else
+                {
+                    <li class="list-group-item"><i class="fas fa-dollar-sign"></i> Entry fee: @bet.EntryFee.ToString("0.00$")</li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+<nav aria-label="Bet history pagination">
+    <ul class="pagination justify-content-center">
+        @{
+            Model.DisplayCount = Math.Min(Model.DisplayCount, Model.PageCount);
+
+            var middle = (Model.DisplayCount + 1) / 2;
+
+            var startIndex = Math.Max(1, Model.CurrentPage - middle);
+            var endIndex = Math.Min(Model.PageCount, Model.CurrentPage + middle);
+        }
+
+        @for (int pageIndex = startIndex; pageIndex <= endIndex; pageIndex++)
+        {
+            @if (pageIndex == Model.CurrentPage)
+            {
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link">@pageIndex</span>
+                </li>
+            }
+            else
+            {
+                <li class="page-item">
+                    <a class="page-link"
+               asp-controller="Trades"
+               asp-action="History"
+               asp-route-page-index="@pageIndex"
+               asp-route-per-page="@Model.ItemsPerPage">
+                        @pageIndex
+                    </a>
+                </li>
+            }
+        }
+    </ul>
+</nav>
