@@ -3,7 +3,6 @@
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
 
-    using BOTS.Data.Repositories;
     using BOTS.Services.ApplicationSettings;
     using BOTS.Services.Common;
 
@@ -46,35 +45,35 @@
 
         public async Task<T> GetActiveUserPresetAsync<T>(Guid userId)
             => await this.userPresetRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .Where(x => x.OwnerId == userId && x.IsActive)
                             .ProjectTo<T>(this.mapper.ConfigurationProvider)
                             .FirstAsync();
 
         public async Task<Guid?> GetActiveUserPresetIdAsync(Guid userId)
             => await this.userPresetRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .Where(x => x.OwnerId == userId && x.IsActive)
                             .Select(x => x.Id as Guid?)
                             .FirstOrDefaultAsync();
 
         public async Task<IEnumerable<T>> GetUserPresetsAsync<T>(Guid userId)
             => await this.userPresetRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .Where(x => x.OwnerId == userId)
                             .ProjectTo<T>(this.mapper.ConfigurationProvider)
                             .ToArrayAsync();
 
         public async Task<T> GetUserPresetAsync<T>(Guid presetId)
             => await this.userPresetRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .Where(x => x.Id == presetId)
                             .ProjectTo<T>(this.mapper.ConfigurationProvider)
                             .FirstAsync();
 
         public async Task<bool> IsUserPresetOwnerAsync(Guid userId, Guid presetId)
             => await this.userPresetRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .AnyAsync(x => x.OwnerId == userId && x.Id == presetId);
 
         public async Task SetDefaultPresetAsync(Guid userId, Guid presetId)
@@ -156,27 +155,27 @@
 
         private async Task<bool> UserHasActivePresetAsync(Guid userId)
             => await this.userPresetRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .AnyAsync(x => x.OwnerId == userId && x.IsActive);
 
         private async Task<UserPreset?> GetActiveUserPresetAsync(Guid userId)
             => await this.userPresetRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .FirstOrDefaultAsync(x => x.OwnerId == userId && x.IsActive);
 
         private async Task<UserPreset?> GetUserPresetAsync(Guid userId, Guid presetId)
             => await this.userPresetRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .FirstOrDefaultAsync(x => x.OwnerId == userId && x.Id == presetId);
 
         private async Task<UserPreset?> GetPresetAsync(Guid presetId)
             => await this.userPresetRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .FirstOrDefaultAsync(x => x.Id == presetId);
 
         private async Task<UserPreset?> GetFirstUserPreset(Guid userId, Guid differentFrom)
             => await this.userPresetRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .FirstOrDefaultAsync(x => x.OwnerId == userId && x.Id != differentFrom);
     }
 }

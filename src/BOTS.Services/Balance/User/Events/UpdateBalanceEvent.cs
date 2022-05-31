@@ -1,4 +1,4 @@
-﻿namespace BOTS.Services.Balance.Events
+﻿namespace BOTS.Services.Balance.User.Events
 {
     public class UpdateBalanceEvent
     {

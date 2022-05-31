@@ -1,4 +1,4 @@
-﻿namespace BOTS.Data.Repositories
+﻿namespace BOTS.Data.Infrastructure.Repositories
 {
     using System.Linq.Expressions;
 
@@ -7,7 +7,7 @@
     {
         IQueryable<T> All();
 
-        IQueryable<T> AllAsNotracking();
+        IQueryable<T> AllAsNoTracking();
 
         Task<T?> GetById(object id);
 
@@ -18,6 +18,8 @@
         void Patch(T item, params Expression<Func<T, object>>[] includeProperties);
 
         void Remove(T item);
+
+        int SaveChanges();
 
         Task<int> SaveChangesAsync();
     }

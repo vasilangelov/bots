@@ -19,7 +19,7 @@
         public async Task<T> GetValue<T>(string key)
         {
             string value = await this.applicationSettingRepository
-                                        .AllAsNotracking()
+                                        .AllAsNoTracking()
                                         .Where(x => x.Key == key)
                                         .Select(x => x.Value)
                                         .FirstAsync();

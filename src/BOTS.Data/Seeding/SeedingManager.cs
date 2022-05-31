@@ -1,6 +1,6 @@
 ﻿namespace BOTS.Data.Seeding
 {
-    public static class SeederManager
+    public static class SeedingManager
     {
         public static async Task SeedAsync(ApplicationDbContext dbContext)
         {
@@ -12,6 +12,7 @@
                 new CurrencyPairSeeder(),
                 new TradingWindowOptionSeeder(),
                 new BettingOptionPresetSeeder(),
+                new TreasurySeeder(),
             };
 
             foreach (var seeder in seeders)

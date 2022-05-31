@@ -1,13 +1,13 @@
 using System.Text.Json.Serialization;
 
 using BOTS.Data;
+using BOTS.Data.Infrastructure.Repositories;
 using BOTS.Data.Infrastructure.Repositories.EntityFramework;
 using BOTS.Data.Infrastructure.Transactions;
 using BOTS.Data.Infrastructure.Transactions.EntityFramework;
 using BOTS.Data.Models;
-using BOTS.Data.Repositories;
 using BOTS.Services;
-using BOTS.Services.Balance.Events;
+using BOTS.Services.Balance.User.Events;
 using BOTS.Services.Currencies.CurrencyRates;
 using BOTS.Services.Infrastructure.Events;
 using BOTS.Services.Mapping;

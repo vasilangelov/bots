@@ -38,6 +38,7 @@
 
         public DbSet<Bet> Bets { get; set; } = default!;
 
+        public DbSet<Treasury> Treasuries { get; set; } = default!;
 
         // TODO: maybe extract to entity type configuration
 

@@ -5,10 +5,11 @@
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
 
+    using BOTS.Data.Infrastructure.Repositories;
     using BOTS.Data.Infrastructure.Transactions;
     using BOTS.Data.Models;
-    using BOTS.Data.Repositories;
     using BOTS.Services.Balance;
+    using BOTS.Services.Balance.System;
     using BOTS.Services.Common;
     using BOTS.Services.Currencies.CurrencyRates;
 
@@ -21,6 +22,7 @@
         private readonly IRepository<BettingOption> bettingOptionRepository;
         private readonly ICurrencyRateProviderService currencyRateProviderService;
         private readonly IBalanceService balanceService;
+        private readonly ITreasuryService treasuryService;
         private readonly ITransactionManager transactionManager;
         private readonly IMapper mapper;
 
@@ -29,6 +31,7 @@
             IRepository<BettingOption> bettingOptionRepository,
             ICurrencyRateProviderService currencyRateProviderService,
             IBalanceService balanceService,
+            ITreasuryService treasuryService,
             ITransactionManager transactionManager,
             IMapper mapper)
         {
@@ -36,13 +39,14 @@
             this.bettingOptionRepository = bettingOptionRepository;
             this.currencyRateProviderService = currencyRateProviderService;
             this.balanceService = balanceService;
+            this.treasuryService = treasuryService;
             this.transactionManager = transactionManager;
             this.mapper = mapper;
         }
 
         public async Task<IEnumerable<T>> GetActiveBetsAsync<T>(Guid userId)
             => await this.betRepository
-                         .AllAsNotracking()
+                         .AllAsNoTracking()
                          .Where(x => x.UserId == userId &&
                                      !x.BettingOption.TradingWindow.IsClosed)
                          .ProjectTo<T>(this.mapper.ConfigurationProvider)
@@ -55,10 +59,8 @@
             decimal barrier,
             decimal payout)
         {
-            var transaction =
-                await this.transactionManager.BeginTransactionAsync(IsolationLevel.RepeatableRead);
+            var transaction = await this.transactionManager.BeginTransactionAsync(IsolationLevel.ReadCommitted);
 
-            // TODO: check money avalability... (from money treasury)
             try
             {
                 var bettingOption = await this.GetBettingOptionAsync(bettingOptionId);
@@ -109,6 +111,15 @@
                     throw new InvalidOperationException("User does not have enough balance");
                 }
 
+                bool canPayout = await this.treasuryService.CanPlaceBetAsync(entryFee, payout);
+
+                if (!canPayout)
+                {
+                    throw new InvalidOperationException("Cannot payout potential reward");
+                }
+
+                await this.treasuryService.AddSystemBalanceAsync(entryFee);
+                await this.treasuryService.AddUserProfitsAsync(payout - entryFee);
                 await this.balanceService.SubtractFromBalanceAsync(userId, entryFee);
 
                 var result = await this.AddBetAsync<T>(userId,
@@ -137,7 +148,7 @@
         public async Task PayoutBetsAsync(Guid tradingWindowId)
         {
             var winningBets = await this.betRepository
-                .AllAsNotracking()
+                .AllAsNoTracking()
                 .Where(x => x.BettingOption.TradingWindowId == tradingWindowId &&
                             ((x.Type == BetType.Higher &&
                                 x.BarrierPrediction < x.BettingOption.CloseValue) ||
@@ -151,7 +162,19 @@
                 await this.balanceService.AddToBalanceAsync(winningBet.UserId, winningBet.Payout);
             }
 
-            // TODO: calculate in treasury
+            var losingBets = await this.betRepository
+                .AllAsNoTracking()
+                .Where(x => x.BettingOption.TradingWindowId == tradingWindowId &&
+                            ((x.Type == BetType.Higher &&
+                                x.BarrierPrediction >= x.BettingOption.CloseValue) ||
+                            (x.Type == BetType.Lower &&
+                                x.BarrierPrediction <= x.BettingOption.CloseValue)))
+                .SumAsync(x => x.Payout - x.EntryFee);
+
+            if (losingBets > 0)
+            {
+                await this.treasuryService.SubtractUserProfitsAsync(losingBets);
+            }
         }
 
         private async Task<T> AddBetAsync<T>(
@@ -176,7 +199,7 @@
             await this.betRepository.SaveChangesAsync();
 
             return await this.betRepository
-                    .AllAsNotracking()
+                    .AllAsNoTracking()
                     .Where(x => x.Id == bet.Id)
                     .ProjectTo<T>(this.mapper.ConfigurationProvider)
                     .FirstAsync();
@@ -184,7 +207,7 @@
 
         private async Task<bool> HasActiveUserCurrencyPairBet(Guid userId, int currencyPairId)
             => await this.betRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .AnyAsync(x => x.UserId == userId &&
                                            x.BettingOption.CurrencyPairId == currencyPairId &&
                                            !x.BettingOption.TradingWindow.IsClosed);
@@ -197,7 +220,7 @@
 
         private async Task<BettingOptionInfo> GetBettingOptionAsync(Guid bettingOptionId)
             => await this.bettingOptionRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .Where(x => x.Id == bettingOptionId)
                             .Select(x => new BettingOptionInfo(
                                 x.CurrencyPairId,

@@ -1,5 +1,8 @@
 ﻿namespace BOTS.Services.Trades.TradingWindows
 {
+    using System.Data;
+
+    using BOTS.Data.Infrastructure.Transactions;
     using BOTS.Data.Models;
     using BOTS.Services.Common;
     using BOTS.Services.Infrastructure.Events;
@@ -19,6 +22,7 @@
         private readonly IRepository<BettingOptionPreset> bettingOptionPresetRepository;
         private readonly IBettingOptionService bettingOptionService;
         private readonly IBetService betService;
+        private readonly ITransactionManager transactionManager;
         private readonly IEventManager<TradingWindowClosedEvent> tradingWindowEventManager;
         private readonly IMemoryCache memoryCache;
 
@@ -27,6 +31,7 @@
             IRepository<BettingOptionPreset> bettingOptionPresetRepository,
             IBettingOptionService bettingOptionService,
             IBetService betService,
+            ITransactionManager transactionManager,
             IEventManager<TradingWindowClosedEvent> tradingWindowEventManager,
             IMemoryCache memoryCache)
         {
@@ -34,6 +39,7 @@
             this.bettingOptionPresetRepository = bettingOptionPresetRepository;
             this.bettingOptionService = bettingOptionService;
             this.betService = betService;
+            this.transactionManager = transactionManager;
             this.tradingWindowEventManager = tradingWindowEventManager;
             this.memoryCache = memoryCache;
         }
@@ -122,7 +128,7 @@
                         entry.SetAbsoluteExpiration(TimeSpan.FromMinutes(1));
 
                         return this.bettingOptionPresetRepository
-                                        .AllAsNotracking()
+                                        .AllAsNoTracking()
                                         .Include(x => x.TradingWindowPreset)
                                         .AsEnumerable()
                                         .GroupBy(x => x.TradingWindowPreset.Duration)
@@ -131,7 +137,7 @@
 
         private ICollection<TradingWindowInfo> GetActiveTradingWindows()
             => this.tradingWindowRepository
-                        .AllAsNotracking()
+                        .AllAsNoTracking()
                         .Where(x => !x.IsClosed)
                         .Select(x => new TradingWindowInfo(
                             x.Id,
@@ -143,7 +149,7 @@
 
         private async Task<IEnumerable<EndedTradingWindowInfo>> GetNotClosedEndedTradingWindowsAsync()
             => await this.tradingWindowRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .Where(x => DateTime.UtcNow >= x.End && !x.IsClosed)
                             .Select(x => new EndedTradingWindowInfo(x.Id, x.End))
                             .ToArrayAsync();
@@ -168,19 +174,36 @@
 
         private async Task CloseTradingWindowAsync(Guid tradingWindowId, DateTime end)
         {
-            var window = new TradingWindow
+            var transaction = await this.transactionManager.BeginTransactionAsync(IsolationLevel.Serializable);
+
+            try
             {
-                Id = tradingWindowId,
-                IsClosed = true,
-            };
+                var window = new TradingWindow
+                {
+                    Id = tradingWindowId,
+                    IsClosed = true,
+                };
 
-            this.tradingWindowRepository.Patch(window, x => x.IsClosed);
+                this.tradingWindowRepository.Patch(window, x => x.IsClosed);
 
-            await this.tradingWindowRepository.SaveChangesAsync();
+                await this.tradingWindowRepository.SaveChangesAsync();
 
-            await this.bettingOptionService.SetBettingOptionsClosingValueAsync(tradingWindowId, end);
+                await this.bettingOptionService.SetBettingOptionsClosingValueAsync(tradingWindowId, end);
 
-            await this.betService.PayoutBetsAsync(tradingWindowId);
+                await this.betService.PayoutBetsAsync(tradingWindowId);
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+
+                throw;
+            }
+            finally
+            {
+                await transaction.DisposeAsync();
+            }
         }
     }
 }

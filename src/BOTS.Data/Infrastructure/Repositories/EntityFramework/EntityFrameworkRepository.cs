@@ -4,7 +4,7 @@
     using System.Linq.Expressions;
     using System.Threading.Tasks;
 
-    using BOTS.Data.Repositories;
+    using BOTS.Data.Infrastructure.Repositories;
 
     using Microsoft.EntityFrameworkCore;
 
@@ -23,7 +23,7 @@
         public IQueryable<T> All()
             => this.dbSet;
 
-        public IQueryable<T> AllAsNotracking()
+        public IQueryable<T> AllAsNoTracking()
             => this.dbSet.AsNoTracking();
 
         public async Task<T?> GetById(object id)
@@ -64,6 +64,9 @@
 
         public async Task<int> SaveChangesAsync()
             => await this.dbContext.SaveChangesAsync();
+
+        public int SaveChanges()
+            => this.dbContext.SaveChanges();
 
         public void Dispose()
         {

@@ -1,6 +1,6 @@
 ﻿namespace BOTS.Web.Hubs.Trading.Events
 {
-    using BOTS.Services.Balance.Events;
+    using BOTS.Services.Balance.User.Events;
     using BOTS.Services.Infrastructure.Events;
 
     using Microsoft.AspNetCore.SignalR;

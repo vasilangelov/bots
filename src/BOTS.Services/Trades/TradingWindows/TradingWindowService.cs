@@ -3,7 +3,6 @@
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
 
-    using BOTS.Data.Repositories;
     using BOTS.Services.Common;
 
     [TransientService]
@@ -20,14 +19,14 @@
 
         public async Task<T> GetTradingWindowAsync<T>(Guid tradingWindowId)
             => await this.tradingWindowRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .Where(x => x.Id == tradingWindowId)
                             .ProjectTo<T>(this.mapper.ConfigurationProvider)
                             .FirstAsync();
 
         public async Task<bool> IsTradingWindowActiveAsync(Guid tradingWindowId)
             => await this.tradingWindowRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .AnyAsync(x => x.Id == tradingWindowId && x.End > DateTime.UtcNow);
     }
 }

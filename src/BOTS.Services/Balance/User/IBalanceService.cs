@@ -2,6 +2,10 @@
 {
     public interface IBalanceService
     {
+        Task DepositAsync(Guid userId, decimal amount);
+
+        Task WithdrawAsync(Guid userId, decimal amount);
+
         Task AddToBalanceAsync(Guid userId, decimal amount);
 
         Task SubtractFromBalanceAsync(Guid userId, decimal amount);

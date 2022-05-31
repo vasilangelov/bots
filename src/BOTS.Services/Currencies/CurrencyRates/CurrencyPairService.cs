@@ -5,7 +5,6 @@
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
 
-    using BOTS.Data.Repositories;
     using BOTS.Services.Common;
     using BOTS.Services.Infrastructure.Extensions;
 
@@ -31,21 +30,21 @@
         }
         public async Task<IEnumerable<int>> GetActiveCurrencyPairIdsAsync()
             => await this.currencyPairRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .Where(x => x.Display)
                             .Select(x => x.Id)
                             .ToArrayAsync();
 
         public async Task<IEnumerable<(string, string)>> GetAllActiveCurrencyPairNamesAsync()
             => await this.currencyPairRepository
-                                .AllAsNotracking()
+                                .AllAsNoTracking()
                                 .Where(x => x.Display)
                                 .Select(x => new Tuple<string, string>(x.CurrencyFrom.Name, x.CurrencyTo.Name).ToValueTuple())
                                 .ToArrayAsync();
 
         public async Task<IEnumerable<T>> GetActiveCurrencyPairsAsync<T>()
             => await currencyPairRepository
-                                .AllAsNotracking()
+                                .AllAsNoTracking()
                                 .Where(x => x.Display)
                                 .ProjectTo<T>(mapper.ConfigurationProvider)
                                 .ToArrayAsync();
@@ -53,7 +52,7 @@
 
         public async Task<bool> IsCurrencyPairActiveAsync(int currencyPairId)
             => await currencyPairRepository
-                                .AllAsNotracking()
+                                .AllAsNoTracking()
                                 .AnyAsync(x => x.Id == currencyPairId && x.Display);
 
         public async Task<(string, string)> GetCurrencyPairNamesAsync(int currencyPairId)
@@ -63,7 +62,7 @@
             if (!currencyRateNames.ContainsKey(currencyPairId))
             {
                 var (from, to) = await this.currencyPairRepository
-                                .AllAsNotracking()
+                                .AllAsNoTracking()
                                 .Where(x => x.Id == currencyPairId)
                                 .Select(x =>
                                     new Tuple<string, string>(x.CurrencyFrom.Name, x.CurrencyTo.Name)

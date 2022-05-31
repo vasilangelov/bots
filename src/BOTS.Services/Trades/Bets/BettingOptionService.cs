@@ -3,6 +3,7 @@
     using AutoMapper;
     using AutoMapper.QueryableExtensions;
 
+    using BOTS.Data.Infrastructure.Repositories;
     using BOTS.Data.Models;
     using BOTS.Services.Common;
     using BOTS.Services.Currencies.CurrencyRates;
@@ -71,28 +72,21 @@
 
         public async Task<bool> IsBettingOptionActiveAsync(Guid bettingOptionId)
             => await this.bettingOptionRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .AnyAsync(x => x.Id == bettingOptionId &&
                                            x.TradingWindow.End > DateTime.UtcNow);
 
         public async Task<DateTime> GetBettingOptionEndAsync(Guid bettingOptionId)
             => await this.bettingOptionRepository
-                            .AllAsNotracking()
+                            .AllAsNoTracking()
                             .Where(x => x.Id == bettingOptionId)
                             .Select(x => x.TradingWindow.End)
                             .FirstAsync();
 
-        private async Task<IEnumerable<BettingOptionInfo>> GetBettingOptionInfoAsync(Guid tradingWindowId)
-            => await this.bettingOptionRepository
-                            .AllAsNotracking()
-                            .Where(x => x.TradingWindowId == tradingWindowId)
-                            .Select(x => new BettingOptionInfo(x.Id, x.CurrencyPairId))
-                            .ToArrayAsync();
-
         public async Task<IEnumerable<T>> GetActiveBettingOptionsForCurrencyPairAsync<T>(
             int currencyPairId)
             => await this.bettingOptionRepository
-                        .AllAsNotracking()
+                        .AllAsNoTracking()
                         .Where(x => x.CurrencyPairId == currencyPairId &&
                                     x.TradingWindow.End > DateTime.UtcNow)
                         .OrderBy(x => x.TradingWindow.Duration)
@@ -101,17 +95,24 @@
 
         public async Task<T> GetBettingOptionAsync<T>(Guid bettingOptionId)
             => await this.bettingOptionRepository
-                         .AllAsNotracking()
+                         .AllAsNoTracking()
                          .Where(x => x.Id == bettingOptionId)
                          .ProjectTo<T>(this.mapper.ConfigurationProvider)
                          .FirstAsync();
 
         public async Task<IEnumerable<T>> GetAllActiveBettingOptionsAsync<T>()
             => await this.bettingOptionRepository
-                         .AllAsNotracking()
+                         .AllAsNoTracking()
                          .Where(x => !x.TradingWindow.IsClosed)
                          .ProjectTo<T>(this.mapper.ConfigurationProvider)
                          .ToArrayAsync();
+        private async Task<IEnumerable<BettingOptionInfo>> GetBettingOptionInfoAsync(Guid tradingWindowId)
+            => await this.bettingOptionRepository
+                    .AllAsNoTracking()
+                    .Where(x => x.TradingWindowId == tradingWindowId)
+                    .Select(x => new BettingOptionInfo(x.Id, x.CurrencyPairId))
+                    .ToArrayAsync();
+
         private record class BettingOptionInfo(Guid Id, int CurrencyPairId);
 
         private void SetBettingOptionClosingValueAsync(Guid bettingOptionId,

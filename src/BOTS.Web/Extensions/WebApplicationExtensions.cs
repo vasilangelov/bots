@@ -22,7 +22,7 @@
 
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            await SeederManager.SeedAsync(dbContext);
+            await SeedingManager.SeedAsync(dbContext);
         }
 
         public static async Task SeedCurrenciesAsync(this WebApplication app)

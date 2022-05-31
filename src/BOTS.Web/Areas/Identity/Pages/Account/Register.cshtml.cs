@@ -8,6 +8,7 @@ using System.Text.Encodings.Web;
 
 using BOTS.Data.Models;
 using BOTS.Services.ApplicationSettings;
+using BOTS.Services.Balance;
 using BOTS.Services.Nationalities;
 using BOTS.Web.Models.ViewModels;
 
@@ -28,6 +29,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly IBalanceService _balanceService;
         private readonly INationalityService _nationalityService;
         private readonly IApplicationSettingService _applicationSettingService;
 
@@ -37,6 +39,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
+            IBalanceService balanceService,
             INationalityService nationalityService,
             IApplicationSettingService applicationSettingService)
         {
@@ -46,6 +49,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _balanceService = balanceService;
             _nationalityService = nationalityService;
             _applicationSettingService = applicationSettingService;
         }
@@ -143,7 +147,6 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
 
                 var user = CreateUser();
 
-                user.Balance = await this._applicationSettingService.GetValue<decimal>("InitialBalance");
                 user.NationalityId = Input.NationalityId;
 
                 await _userStore.SetUserNameAsync(user, Input.Username, CancellationToken.None);
@@ -155,6 +158,10 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
                     _logger.LogInformation("User created a new account with password.");
 
                     var userId = await _userManager.GetUserIdAsync(user);
+
+                    var initialBalance = await this._applicationSettingService.GetValue<decimal>("InitialBalance");
+                    await _balanceService.DepositAsync(Guid.Parse(userId), initialBalance);
+
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
                     var callbackUrl = Url.Page(
