@@ -1,39 +1,41 @@
 ﻿@model PaginationViewModel<BetHistoryViewModel>
 
+@inject IViewLocalizer Localizer
+
 @{
-    ViewData["Title"] = "Bet History";
+    ViewData["Title"] = @Localizer["Bet History"];
 }
 
 <div class="offset-sm-0 col-sm-12 offset-lg-1 col-lg-10 d-flex flex-column">
-    <h1 class="text-center">Bet History</h1>
+    <h1 class="text-center">@Localizer["Bet History"]</h1>
 
     @foreach (var bet in this.Model.Items)
     {
         <div class="card my-3">
             <div class="card-header d-flex justify-content-between px-4 text-center">
                 <div class="w-100">@bet.Id</div>
-                <div class="w-100 "><strong>Bet</strong></div>
+                <div class="w-100 "><strong>@Localizer["Bet"]</strong></div>
                 <div class="w-100 text-end">
                     @if (bet.IsWinningBet)
                     {
-                        <span class="badge rounded-pill bg-success">Bet Won</span>
+                        <span class="badge rounded-pill bg-success">@Localizer["Bet Won"]</span>
                     }
                     else
                     {
-                        <span class="badge rounded-pill bg-danger">Bet Lost</span>
+                        <span class="badge rounded-pill bg-danger">@Localizer["Bet Lost"]</span>
                     }
                 </div>
             </div>
             <ul class="list-group list-group-flush text-md-start text-center">
-                <li class="list-group-item"><i class="fas fa-id-badge"></i> @bet.CurrencyPair is @bet.Type than @bet.BarrierPrediction</li>
-                <li class="list-group-item"><i class="fas fa-calendar-check"></i> @bet.EndsOn</li>
+                <li class="list-group-item"><i class="fas fa-id-badge"></i> @Localizer["prediction", bet.CurrencyPair, Localizer[bet.Type], bet.BarrierPrediction]</li>
+                <li class="list-group-item"><i class="fas fa-calendar-check"></i> <span data-display-time="@bet.EndsOn.ToString("O")"></span></li>
                 @if (bet.IsWinningBet)
                 {
-                    <li class="list-group-item"><i class="fas fa-dollar-sign"></i> Payout: @bet.Payout.ToString("0.00$")</li>
+                    <li class="list-group-item"><i class="fas fa-dollar-sign"></i> @Localizer["Payout"]: @bet.Payout.ToString("0.00$")</li>
                 }
                 else
                 {
-                    <li class="list-group-item"><i class="fas fa-dollar-sign"></i> Entry fee: @bet.EntryFee.ToString("0.00$")</li>
+                    <li class="list-group-item"><i class="fas fa-dollar-sign"></i> @Localizer["Entry fee"]: @bet.EntryFee.ToString("0.00$")</li>
                 }
             </ul>
         </div>

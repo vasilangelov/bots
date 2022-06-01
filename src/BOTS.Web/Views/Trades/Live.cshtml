@@ -1,17 +1,20 @@
 ﻿@using BOTS.Data.Models
+@using System.Globalization
 @model LiveViewModel
 
+@inject IViewLocalizer Localizer
+
 @{
-    ViewData["Title"] = "Live Trades";
+    ViewData["Title"] = @Localizer["Live Trades"];
 }
 
-<h1 class="text-center">Live trading</h1>
+<h1 class="text-center">@Localizer["Live Trading"]</h1>
 
 <div class="container">
     <div class="row">
         <div class="col-xl-6 justify-center">
             <div class="d-flex flex-column align-items-center">
-                <label for="chartTypeSelect" class="form-label">Chart type</label>
+                <label for="chartTypeSelect" class="form-label">@Localizer["Chart type"]</label>
                 <select asp-for="Preset.ChartType" asp-items="@Html.GetEnumSelectList<ChartType>()" id="chartTypeSelect" class="form-select w-50">
                 </select>
             </div>
@@ -22,7 +25,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-sm-6 text-center">
-                        <h5>Currency pair</h5>
+                        <h5>@Localizer["Currency pair"]</h5>
                         <select id="currencyPair" class="form-select"
                                 asp-for="Preset.CurrencyPairId" asp-items="Model.CurrencyPairs"></select>
                     </div>
@@ -36,23 +39,23 @@
                         <table class="table table-bordered">
                             <thead>
                                 <tr class="table-active">
-                                    <th colspan="2" class="text-center">Payout</th>
+                                    <th colspan="2" class="text-center">@Localizer["Payout"]</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td>$</td>
-                                    <td><input id="payoutInput" type="number" value="@Model.Preset.Payout" class="form-control text-right" /></td>
+                                    <td><input id="payoutInput" type="number" value="@Model.Preset.Payout.ToString("0.00", CultureInfo.InvariantCulture)" class="form-control text-right" /></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                     <div class="col-sm-4">
-                        <h5>Trading window</h5>
+                        <h5>@Localizer["Trading window"]</h5>
                         <select id="bettingOptions" class="form-select"></select>
                     </div>
                     <div class="col-sm-4">
-                        <h5>Remaining time</h5>
+                        <h5>@Localizer["Remaining time"]</h5>
                         <p id="timeRemaining"></p>
                     </div>
                 </div>
@@ -60,9 +63,9 @@
                     <table class="table table-active table-bordered text-center ">
                         <thead>
                             <tr>
-                                <th>Barrier</th>
-                                <th><img style="max-width: 3rem;" class="rounded d-block mx-auto" src="~/img/higher.svg" asp-append-version="true" alt="higher" /> Higher</th>
-                                <th><img style="max-width: 3rem;" class="rounded d-block mx-auto" src="~/img/lower.svg" asp-append-version="true" alt="lower" /> Lower</th>
+                                <th>@Localizer["Barrier"]</th>
+                                <th><img style="max-width: 3rem;" class="rounded d-block mx-auto" src="~/img/higher.svg" asp-append-version="true" alt="higher" />@Localizer["Higher"]</th>
+                                <th><img style="max-width: 3rem;" class="rounded d-block mx-auto" src="~/img/lower.svg" asp-append-version="true" alt="lower" />@Localizer["Lower"]</th>
                             </tr>
                         </thead>
                         <tbody id="barrierContainer"></tbody>
@@ -73,13 +76,13 @@
     </div>
     <div class="row">
         <table class="table table-bordered">
-            <caption>Active bets</caption>
+            <caption>@Localizer["Active bets"]</caption>
             <thead>
                 <tr>
-                    <th>Bet Id</th>
-                    <th>Prediction</th>
-                    <th>Entry fee</th>
-                    <th>Payout</th>
+                    <th>@Localizer["Bet Id"]</th>
+                    <th>@Localizer["Prediction"]</th>
+                    <th>@Localizer["Entry fee"]</th>
+                    <th>@Localizer["Payout"]</th>
                 </tr>
             </thead>
             <tbody id="activeBets">

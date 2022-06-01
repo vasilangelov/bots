@@ -1,37 +1,43 @@
 ﻿@using BOTS.Data.Models
 @model CreateUserPresetViewModel
 
+@inject IViewLocalizer Localizer
+
 @{
-    ViewData["Title"] = "Create Preset";
+    ViewData["Title"] = @Localizer["Create Preset"];
 }
 
 <div class="offset-md-3 col-md-6">
-    <h1 class="text-center">Create Preset</h1>
+    <h1 class="text-center">@Localizer["Create Preset"]</h1>
 
     <form method="post" asp-action="CreatePreset">
         <div asp-validation-summary="All" class="text-danger"></div>
 
         <div class="form-group">
-            <label asp-for="@this.Model.Preset.Name"></label>
+            <label asp-for="@this.Model.Preset.Name">@Localizer["Name"]</label>
             <input class="form-control" asp-for="@this.Model.Preset.Name" />
             <span class="invalid-feedback" asp-validation-for="@this.Model.Preset.Name"></span>
         </div>
         <div class="form-group">
-            <label asp-for="@this.Model.Preset.CurrencyPairId"></label>
+            <label asp-for="@this.Model.Preset.CurrencyPairId">@Localizer["Currency Pair"]</label>
             <select class="form-select" asp-for="@this.Model.Preset.CurrencyPairId" asp-items="@this.Model.CurrencyPairs"></select>
             <span class="invalid-feedback" asp-validation-for="@this.Model.Preset.CurrencyPairId"></span>
         </div>
         <div class="form-group">
-            <label asp-for="@this.Model.Preset.ChartType"></label>
+            <label asp-for="@this.Model.Preset.ChartType">@Localizer["Chart Type"]</label>
             <select class="form-select" asp-for="@this.Model.Preset.ChartType" asp-items="@Html.GetEnumSelectList<ChartType>()"></select>
             <span class="invalid-feedback" asp-validation-for="@this.Model.Preset.ChartType"></span>
         </div>
         <div class="form-group">
-            <label asp-for="@this.Model.Preset.Payout"></label>
+            <label asp-for="@this.Model.Preset.Payout">@Localizer["Payout"]</label>
             <input class="form-control" asp-for="@this.Model.Preset.Payout" />
             <span class="invalid-feedback" asp-validation-for="@this.Model.Preset.Payout"></span>
         </div>
 
-        <button type="submit" class="btn btn-primary offset-sm-5 col-sm-2">Create</button>
+        <button type="submit" class="btn btn-primary offset-sm-5 col-sm-2">@Localizer["Create"]</button>
     </form>
 </div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+}

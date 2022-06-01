@@ -1,14 +1,16 @@
 ﻿@using BOTS.Data.Models
 @model UserPresetsViewModel
 
+@inject IViewLocalizer Localizer
+
 @{
-    ViewData["Title"] = "Presets";
+    ViewData["Title"] = @Localizer["Presets"];
 }
 
 <div class="offset-sm-0 col-sm-12 offset-lg-2 col-lg-8">
-    <h1 class="text-center">User Presets</h1>
+    <h1 class="text-center">@Localizer["User Presets"]</h1>
 
-    <a class="btn btn-primary d-block w-50 mx-auto my-3" asp-action="CreatePreset">Create a new preset</a>
+    <a class="btn btn-primary d-block w-50 mx-auto my-3" asp-action="CreatePreset">@Localizer["Create a new preset"]</a>
 
     <div class="d-flex flex-md-nowrap flex-wrap gap-4">
         <div class="dropdown w-100" style="flex-basis: 200%;">
@@ -29,11 +31,11 @@
 
         @if (this.Model.CurrentPreset.IsActive)
         {
-            <button class="btn btn-success container-fluid" disabled>Active</button>
+            <button class="btn btn-success container-fluid" disabled>@Localizer["Active"]</button>
         }
         else
         {
-            <a class="btn btn-success container-fluid" asp-action="SetActivePreset" asp-route-id="@this.Model.CurrentPreset.Id">Make active</a>
+            <a class="btn btn-success container-fluid" asp-action="SetActivePreset" asp-route-id="@this.Model.CurrentPreset.Id">@Localizer["Make active"]</a>
         }
     </div>
 
@@ -43,28 +45,32 @@
         <input asp-for="@this.Model.CurrentPreset.Id" hidden />
 
         <div class="form-group">
-            <label asp-for="@this.Model.CurrentPreset.Name"></label>
+            <label asp-for="@this.Model.CurrentPreset.Name">@Localizer["Name"]</label>
             <input class="form-control" asp-for="@this.Model.CurrentPreset.Name" />
             <span class="invalid-feedback" asp-validation-for="@this.Model.CurrentPreset.Name"></span>
         </div>
         <div class="form-group">
-            <label asp-for="@this.Model.CurrentPreset.CurrencyPairId"></label>
+            <label asp-for="@this.Model.CurrentPreset.CurrencyPairId">@Localizer["Currency Pair"]</label>
             <select class="form-select" asp-for="@this.Model.CurrentPreset.CurrencyPairId" asp-items="@this.Model.CurrencyPairs"></select>
             <span class="invalid-feedback" asp-validation-for="@this.Model.CurrentPreset.CurrencyPairId"></span>
         </div>
         <div class="form-group">
-            <label asp-for="@this.Model.CurrentPreset.ChartType"></label>
+            <label asp-for="@this.Model.CurrentPreset.ChartType">@Localizer["Chart Type"]</label>
             <select class="form-select" asp-for="@this.Model.CurrentPreset.ChartType" asp-items="@Html.GetEnumSelectList<ChartType>()"></select>
             <span class="invalid-feedback" asp-validation-for="@this.Model.CurrentPreset.ChartType"></span>
         </div>
         <div class="form-group">
-            <label asp-for="@this.Model.CurrentPreset.Payout"></label>
+            <label asp-for="@this.Model.CurrentPreset.Payout">@Localizer["Payout"]</label>
             <input class="form-control" asp-for="@this.Model.CurrentPreset.Payout" />
             <span class="invalid-feedback" asp-validation-for="@this.Model.CurrentPreset.Payout"></span>
         </div>
         <div class="d-flex justify-content-center gap-4">
-            <button type="submit" class="btn btn-primary">Update</button>
-            <a class="btn btn-danger" asp-action="RemovePreset" asp-route-id="@this.Model.CurrentPreset.Id">Delete</a>
+            <button type="submit" class="btn btn-primary">@Localizer["Update"]</button>
+            <a class="btn btn-danger" asp-action="RemovePreset" asp-route-id="@this.Model.CurrentPreset.Id">@Localizer["Delete"]</a>
         </div>
     </form>
 </div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+}

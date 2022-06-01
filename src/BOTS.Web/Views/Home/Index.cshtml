@@ -1,5 +1,7 @@
-﻿@{
-    ViewData["Title"] = "Home";
+﻿@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = @Localizer["Home"];
 }
 
 <div class="text-center">

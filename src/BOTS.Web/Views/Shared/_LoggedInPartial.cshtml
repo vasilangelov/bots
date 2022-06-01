@@ -2,16 +2,17 @@
 @using Microsoft.AspNetCore.Identity
 
 @inject SignInManager<ApplicationUser> SignInManager
+@inject IViewLocalizer Localizer
 
 @if (SignInManager.IsSignedIn(User))
 {
     <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Trades" asp-action="Live">Live Trades</a>
+        <a class="nav-link text-dark" asp-area="" asp-controller="Trades" asp-action="Live">@Localizer["Live Trades"]</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Trades" asp-action="History">History</a>
+        <a class="nav-link text-dark" asp-area="" asp-controller="Trades" asp-action="History">@Localizer["History"]</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="" asp-controller="Trades" asp-action="Presets" asp-route-per-page="10">Presets</a>
+        <a class="nav-link text-dark" asp-area="" asp-controller="Trades" asp-action="Presets" asp-route-per-page="10">@Localizer["Presets"]</a>
     </li>
 }

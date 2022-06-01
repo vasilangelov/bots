@@ -1,0 +1,12 @@
+﻿@{
+    var returnUrl = string.IsNullOrEmpty(this.Context.Request.Path) ? "~/" : $"~{this.Context.Request.Path.Value}";
+}
+
+<nav class="mx-md-3" aria-label="Select language">
+    <ul class="mx-auto nav d-flex gap-2" style="width: fit-content; ">
+        <li class="nav-link p-0"><a asp-controller="Home" asp-action="SetLanguage" asp-route-culture="en-US" asp-route-returnUrl="@returnUrl" class="text-decoration-none" style="font-size: 1.5rem">&#127482;&#127480;</a></li>
+        <li class="nav-link p-0">
+            <a asp-controller="Home" asp-action="SetLanguage" asp-route-culture="bg-BG" asp-route-returnUrl="@returnUrl" class="text-decoration-none" style="font-size: 1.5rem">&#x1F1E7;&#x1F1EC;</a>
+        </li>
+    </ul>
+</nav>

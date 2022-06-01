@@ -43,3 +43,40 @@ Date.fromPlotlyFormat = (function () {
         return new Date(year, month, day, hour, minutes, seconds, milliseconds);
     }
 })();
+
+String.prototype.format = (function () {
+    const formatRegex = /{([0-9]+)}/gm;
+
+    return function (...params) {
+        return this.replaceAll(formatRegex, (_, number) => params[number]);
+    };
+})();
+
+const parseCookie =
+    str => str
+        .split(';')
+        .map(c => c.split('='))
+        .reduce((acc, c) => {
+            acc[decodeURIComponent(c[0].trim())] = decodeURIComponent(c[1].trim());
+
+            return acc;
+        }, {});
+
+function getCulture() {
+    const cultureCookie = parseCookie(document.cookie)['.AspNetCore.Culture'];
+
+    if (cultureCookie === undefined) {
+        return undefined;
+    }
+
+    const cultureInfo = cultureCookie
+        .split('|')
+        .map(c => c.split('='))
+        .reduce((acc, cur) => {
+            acc[cur[0]] = cur[1];
+
+            return acc;
+        }, {});
+
+    return cultureInfo['c'];
+}

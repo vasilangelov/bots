@@ -104,6 +104,16 @@ function renderBarriers() {
     });
 }
 
+const contractLocalizationMap = {
+    'en-US': '{0} is {1} than {2} on {3}',
+    'bg-BG': '{0} е {1} от {2} в {3}'
+};
+
+const predictionLocalizationMap = {
+    'en-US': { 'Higher': 'higher', 'Lower': 'lower' },
+    'bg-BG': { 'Higher': 'по-висок', 'Lower': 'по-нисък' }
+};
+
 function renderBets() {
     portfolioContainer.innerHTML = '';
 
@@ -111,7 +121,16 @@ function renderBets() {
         const tr = el('tr');
 
         tr.appendChild(el('td', { textContent: bet.id }));
-        tr.appendChild(el('td', { textContent: `${bet.currencyPair} is ${bet.type} than ${bet.barrierPrediction.toFixed(6)} on ${new Date(bet.endsOn).toLocaleString()}` }));
+        const culture = getCulture();
+
+        const messageFormat = contractLocalizationMap[culture] ?? contractLocalizationMap['en-US'];
+        const betTypeFormatMap = predictionLocalizationMap[culture] ?? predictionLocalizationMap['en-US'];
+
+        const betType = betTypeFormatMap[bet.type];
+
+        const displayMessage = messageFormat.format(bet.currencyPair, betType, bet.barrierPrediction.toFixed(6), new Date(bet.endsOn).toLocaleString());
+
+        tr.appendChild(el('td', { textContent: displayMessage }));
         tr.appendChild(el('td', { textContent: bet.entryFee.toFixed(2) }));
         tr.appendChild(el('td', { textContent: bet.payout.toFixed(2) }));
 

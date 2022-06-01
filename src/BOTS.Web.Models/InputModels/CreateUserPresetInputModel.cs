@@ -1,6 +1,5 @@
 ﻿namespace BOTS.Web.Models.InputModels
 {
-    using Microsoft.AspNetCore.Mvc.ModelBinding;
     using System.ComponentModel.DataAnnotations;
 
     using BOTS.Data.Models;

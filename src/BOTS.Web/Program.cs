@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text.Json.Serialization;
 
 using BOTS.Data;
@@ -25,6 +26,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure services...
 var mvcBuilder = builder.Services.AddControllersWithViews();
 mvcBuilder.Services.AddRazorPages();
+mvcBuilder.AddViewLocalization().AddDataAnnotationsLocalization();
 
 if (builder.Environment.IsDevelopment())
 {
@@ -63,6 +65,22 @@ builder.Services
            .Add(new JsonStringEnumConverter());
     });
 
+builder.Services
+    .AddLocalization(setup =>
+    {
+        setup.ResourcesPath = "Resources";
+    });
+
+builder.Services
+    .Configure<RequestLocalizationOptions>(options =>
+    {
+        options.SetDefaultCulture("en-US");
+
+        options.AddSupportedCultures("en-US", "bg-BG");
+        options.AddSupportedUICultures("en-US", "bg-BG");
+        options.FallBackToParentUICultures = true;
+    });
+
 builder.Services.AddHttpClient<ThirdPartyCurrencyRateProviderService>();
 
 builder.Services.AddHostedService<CurrencyRateGeneratorBackgroundService>();
@@ -99,6 +117,7 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseRequestLocalization();
 app.UseCookiePolicy();
 
 app.UseRouting();
