@@ -9,6 +9,11 @@
 <div class="offset-sm-0 col-sm-12 offset-lg-1 col-lg-10 d-flex flex-column">
     <h1 class="text-center">@Localizer["Bet History"]</h1>
 
+    @if (!this.Model.Items.Any())
+    {
+        <p class="text-center">@Localizer["It seems that you don't have bet history."]</p>
+    }
+
     @foreach (var bet in this.Model.Items)
     {
         <div class="card my-3">

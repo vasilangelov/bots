@@ -35,7 +35,7 @@
                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
             </div>
             <div class="form-floating">
-                <select asp-for="Input.NationalityId" class="form-select" aria-label="Select nationality" asp-items="@(new SelectList(Model.Nationalities, nameof(NationalityViewModel.Id), nameof(Nationality.Name)))"></select>
+                <select asp-for="Input.NationalityId" class="form-select" aria-label="Select nationality" asp-items="@(new SelectList(Model.Nationalities, nameof(Nationality.Id), nameof(Nationality.Name)))"></select>
                 <label asp-for="Input.NationalityId">@Localizer["Nationality"]</label>
                 <span asp-validation-for="Input.NationalityId" class="text-danger"></span>
             </div>

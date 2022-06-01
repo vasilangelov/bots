@@ -1,0 +1,44 @@
+﻿@page
+@model ExternalLoginModel
+
+@inject IViewLocalizer Localizer;
+
+@{
+    ViewData["Title"] = Localizer["Register"];
+}
+
+<h1>@Localizer["Register"]</h1>
+<h2 id="external-login-title">@Localizer["Associate your {0} account.", @Model.ProviderDisplayName]</h2>
+<hr />
+
+<p id="external-login-description" class="text-info">
+    @Localizer["You've successfully authenticated with {0}. Please enter an email address for this site below and click the Register button to finish logging in.", @Model.ProviderDisplayName];
+</p>
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-floating">
+                <input asp-for="Input.Username" class="form-control" autocomplete="username" aria-required="true" />
+                <label asp-for="Input.Username">@Localizer["Username"]</label>
+                <span asp-validation-for="Input.Username" class="text-danger"></span>
+            </div>
+            <div class="form-floating">
+                <input asp-for="Input.Email" class="form-control" autocomplete="email" />
+                <label asp-for="Input.Email" class="form-label">@Localizer["Email"]</label>
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="form-floating">
+                <select asp-for="Input.NationalityId" class="form-select" aria-label="Select nationality" asp-items="@(new SelectList(Model.Nationalities, nameof(Nationality.Id), nameof(Nationality.Name)))"></select>
+                <label asp-for="Input.NationalityId">@Localizer["Nationality"]</label>
+                <span asp-validation-for="Input.NationalityId" class="text-danger"></span>
+            </div>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">@Localizer["Register"]</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+}

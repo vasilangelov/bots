@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text.Json.Serialization;
 
 using BOTS.Data;
@@ -56,6 +55,14 @@ builder.Services
     })
     .AddRoles<ApplicationRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services
+    .AddAuthentication()
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    });
 
 builder.Services
     .AddSignalR()

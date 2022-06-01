@@ -117,34 +117,22 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Bet" xml:space="preserve">
-    <value>Залог</value>
+  <data name="Associate your {0} account." xml:space="preserve">
+    <value>Свържете вашия акаунт в {0}</value>
   </data>
-  <data name="Bet History" xml:space="preserve">
-    <value>История на залозите</value>
+  <data name="Email" xml:space="preserve">
+    <value>Имейл</value>
   </data>
-  <data name="Bet Lost" xml:space="preserve">
-    <value>Губещ залог</value>
+  <data name="Nationality" xml:space="preserve">
+    <value>Националност</value>
   </data>
-  <data name="Bet Won" xml:space="preserve">
-    <value>Печеливш залог</value>
+  <data name="Register" xml:space="preserve">
+    <value>Регистрация</value>
   </data>
-  <data name="Entry fee" xml:space="preserve">
-    <value>Входна такса</value>
+  <data name="Username" xml:space="preserve">
+    <value>Потребителско име</value>
   </data>
-  <data name="Higher" xml:space="preserve">
-    <value>по-висок</value>
-  </data>
-  <data name="It seems that you don't have bet history." xml:space="preserve">
-    <value>Изглежда, че нямате история на залозите.</value>
-  </data>
-  <data name="Lower" xml:space="preserve">
-    <value>по-нисък</value>
-  </data>
-  <data name="Payout" xml:space="preserve">
-    <value>Изплащане</value>
-  </data>
-  <data name="prediction" xml:space="preserve">
-    <value>{0} е {1} от {2}</value>
+  <data name="You've successfully authenticated with {0}.&#xD;&#xA;    Please enter an email address for this site below and click the Register button to finish&#xD;&#xA;    logging in." xml:space="preserve">
+    <value>Успешно влязохте със {0}. Моля въведете имейл адрес за този сайт и кликнете "Регистрация" за да завършите влизането си.</value>
   </data>
 </root>

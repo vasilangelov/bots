@@ -56,7 +56,7 @@
 
             var pageCount = await this.betService.GetUserHistoryPageCount(userId, perPage.Value);
 
-            if (pageIndex < 1 || pageCount < pageIndex)
+            if (pageIndex < 1 || (pageCount > 0 && pageCount < pageIndex))
             {
                 return this.RedirectToAction(nameof(this.History), new { PageIndex = 1, perPage });
             }
