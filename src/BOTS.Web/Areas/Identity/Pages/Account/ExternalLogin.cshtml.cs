@@ -94,17 +94,18 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Required]
-            [EmailAddress]
+            [Required(ErrorMessage = "Required")]
+            [EmailAddress(ErrorMessage = "EmailAddress")]
+            [Display(Name = "Email")]
             public string Email { get; set; }
 
-            [Required]
-            [StringLength(20, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-            [RegularExpression("^[a-zA-Z]+([._\\-][a-zA-Z]+)*$", ErrorMessage = "The username can have '.', '-' or '_' only in between of words. The words must consist only of uppercase and lowercase letters")]
+            [Required(ErrorMessage = "Required")]
+            [StringLength(20, ErrorMessage = "StringLength_MinMax", MinimumLength = 6)]
+            [RegularExpression("^[a-zA-Z]+([._\\-][a-zA-Z]+)*$", ErrorMessage = "UsernameRegex")]
             [Display(Name = "Username")]
             public string Username { get; set; }
 
-            [Required]
+            [Required(ErrorMessage = "Required")]
             [Display(Name = "Nationality")]
             public int NationalityId { get; set; }
         }

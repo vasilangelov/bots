@@ -17,6 +17,7 @@ using BOTS.Web.Extensions;
 using BOTS.Web.Hubs.Trading;
 using BOTS.Web.Hubs.Trading.Events;
 using BOTS.Web.Models.ViewModels;
+using BOTS.Web.Resources;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -25,7 +26,20 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure services...
 var mvcBuilder = builder.Services.AddControllersWithViews();
 mvcBuilder.Services.AddRazorPages();
-mvcBuilder.AddViewLocalization().AddDataAnnotationsLocalization();
+mvcBuilder
+    .AddViewLocalization(opt =>
+    {
+        opt.ResourcesPath = "Resources";
+    })
+    .AddDataAnnotationsLocalization(opt =>
+    {
+        opt.DataAnnotationLocalizerProvider = (t, f) =>
+        {
+            var fac = f.Create(typeof(ValidationMessages));
+
+            return fac;
+        };
+    });
 
 if (builder.Environment.IsDevelopment())
 {
@@ -73,10 +87,7 @@ builder.Services
     });
 
 builder.Services
-    .AddLocalization(setup =>
-    {
-        setup.ResourcesPath = "Resources";
-    });
+    .AddLocalization();
 
 builder.Services
     .Configure<RequestLocalizationOptions>(options =>
@@ -85,7 +96,6 @@ builder.Services
 
         options.AddSupportedCultures("en-US", "bg-BG");
         options.AddSupportedUICultures("en-US", "bg-BG");
-        options.FallBackToParentUICultures = true;
     });
 
 builder.Services.AddHttpClient<ThirdPartyCurrencyRateProviderService>();
@@ -98,8 +108,6 @@ builder.Services.AddHostedService<CurrencyRateStatBackgroundService>();
 builder.Services.RegisterServiceLayer();
 
 builder.Services.AddSingleton(typeof(IEventManager<>), typeof(EventManager<>));
-
-// TODO: register service layer logic...
 
 builder.Services.AddAutoMapper(typeof(ErrorViewModel).Assembly);
 
@@ -124,7 +132,7 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseRequestLocalization();
+app.UseRequestLocalization("en-US", "bg-BG");
 app.UseCookiePolicy();
 
 app.UseRouting();

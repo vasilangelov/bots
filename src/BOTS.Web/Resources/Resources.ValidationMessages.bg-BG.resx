@@ -117,31 +117,76 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Forgot your password?" xml:space="preserve">
-    <value>Забравена парола?</value>
+  <data name="Chart Type" xml:space="preserve">
+    <value>Тип на диаграмата</value>
   </data>
-  <data name="Log in" xml:space="preserve">
-    <value>Вход</value>
+  <data name="Compare_Match" xml:space="preserve">
+    <value>'{0}' и '{1}' не съвпадат.</value>
+  </data>
+  <data name="Confirm password" xml:space="preserve">
+    <value>Потвърдете паролата</value>
+  </data>
+  <data name="CreditCard" xml:space="preserve">
+    <value>Полето {0} не е валиден номер за кредитна карта.</value>
+  </data>
+  <data name="Currency Pair" xml:space="preserve">
+    <value>Валутна двойка</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Имейл</value>
+  </data>
+  <data name="EmailAddress" xml:space="preserve">
+    <value>Полето {0} е невалиден имейл адрес.</value>
+  </data>
+  <data name="FileExtensions" xml:space="preserve">
+    <value>Полето {0} приема само файлове със следните разширения: {1}</value>
+  </data>
+  <data name="MaxLengthAttribute" xml:space="preserve">
+    <value>Полето {0} трябва да е текст с максимална дължина '{1}'.</value>
+  </data>
+  <data name="MinLengthAttribute" xml:space="preserve">
+    <value>Полето {0} трябва да е текст с дължина поне '{1}'.</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Име</value>
+  </data>
+  <data name="Nationality" xml:space="preserve">
+    <value>Националност</value>
   </data>
   <data name="Password" xml:space="preserve">
     <value>Парола</value>
   </data>
-  <data name="Register as a new user" xml:space="preserve">
-    <value>Регистрация като нов потребител</value>
+  <data name="Payout" xml:space="preserve">
+    <value>Заплащане</value>
   </data>
-  <data name="Remember me" xml:space="preserve">
+  <data name="PhoneAttribute" xml:space="preserve">
+    <value>Полето {0} е невалиден телефонен номер.</value>
+  </data>
+  <data name="Range" xml:space="preserve">
+    <value>Полето {0} трябва да е между {1} и {2}.</value>
+  </data>
+  <data name="Regex" xml:space="preserve">
+    <value>Полето {0} трябва да съвпада с регулярния израз '{1}'.</value>
+  </data>
+  <data name="Remember me?" xml:space="preserve">
     <value>Запомни ме</value>
   </data>
-  <data name="Resend email confirmation" xml:space="preserve">
-    <value>Изпращане наново на имейл за потвърждение</value>
+  <data name="Required" xml:space="preserve">
+    <value>Полето {0} е задължително.</value>
   </data>
-  <data name="Use a local account to log in." xml:space="preserve">
-    <value>Използвайте локален акаунт за вход.</value>
+  <data name="StringLength" xml:space="preserve">
+    <value>Полето {0} трябва да е текст с максимална дължина {1}.</value>
   </data>
-  <data name="Use another service to log in." xml:space="preserve">
-    <value>Използвайте друга услуга за вход.</value>
+  <data name="StringLength_MinMax" xml:space="preserve">
+    <value>Полето {0} трябва да е текст с минимална дължина {2} и максимална дължина {1}.</value>
+  </data>
+  <data name="Url" xml:space="preserve">
+    <value>Полето {0} е невалидно напълно описано http, https, или ftp URL.</value>
   </data>
   <data name="Username" xml:space="preserve">
     <value>Потребителско име</value>
+  </data>
+  <data name="UsernameRegex" xml:space="preserve">
+    <value>Потребителското име може да съдържа '.', '-' or '_' само между думите. Думите трябва да се състоят само от главни и малки латински букви.</value>
   </data>
 </root>

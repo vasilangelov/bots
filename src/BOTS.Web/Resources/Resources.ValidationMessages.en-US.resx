@@ -117,31 +117,46 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Forgot your password?" xml:space="preserve">
-    <value>Забравена парола?</value>
+  <data name="Compare_Match" xml:space="preserve">
+    <value>Fields '{0}' and '{1}' do not match.</value>
   </data>
-  <data name="Log in" xml:space="preserve">
-    <value>Вход</value>
+  <data name="CreditCard" xml:space="preserve">
+    <value>The field {0} is invalid credit card number.</value>
   </data>
-  <data name="Password" xml:space="preserve">
-    <value>Парола</value>
+  <data name="EmailAddress" xml:space="preserve">
+    <value>The field {0} is invalid email address.</value>
   </data>
-  <data name="Register as a new user" xml:space="preserve">
-    <value>Регистрация като нов потребител</value>
+  <data name="FileExtensions" xml:space="preserve">
+    <value>The field {0} accepts only files with the following extensions: {1}</value>
   </data>
-  <data name="Remember me" xml:space="preserve">
-    <value>Запомни ме</value>
+  <data name="MaxLengthAttribute" xml:space="preserve">
+    <value>The field {0} must be a text with maximum length of '{1}'.</value>
   </data>
-  <data name="Resend email confirmation" xml:space="preserve">
-    <value>Изпращане наново на имейл за потвърждение</value>
+  <data name="MinLengthAttribute" xml:space="preserve">
+    <value>The field {0} must be a text with length of at least '{1}'.</value>
   </data>
-  <data name="Use a local account to log in." xml:space="preserve">
-    <value>Използвайте локален акаунт за вход.</value>
+  <data name="PhoneAttribute" xml:space="preserve">
+    <value>The field {0} is invalid phone number.</value>
   </data>
-  <data name="Use another service to log in." xml:space="preserve">
-    <value>Използвайте друга услуга за вход.</value>
+  <data name="Range" xml:space="preserve">
+    <value>The field {0} must be a value between {1} and {2}.</value>
   </data>
-  <data name="Username" xml:space="preserve">
-    <value>Потребителско име</value>
+  <data name="Regex" xml:space="preserve">
+    <value>The field {0} does not match the regualar expression '{1}'.</value>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>The field {0} is required.</value>
+  </data>
+  <data name="StringLength" xml:space="preserve">
+    <value>The field {0} must be a text with maximum length of {1}.</value>
+  </data>
+  <data name="StringLength_MinMax" xml:space="preserve">
+    <value>The field {0} must be a text with minimum length of {2} and maximum length of {1}.</value>
+  </data>
+  <data name="Url" xml:space="preserve">
+    <value>The field {0} is invalid fully described http, https, or ftp URL.</value>
+  </data>
+  <data name="UsernameRegex" xml:space="preserve">
+    <value>The username can have '.', '-' or '_' only in between of words. The words must consist only of uppercase and lowercase letters</value>
   </data>
 </root>

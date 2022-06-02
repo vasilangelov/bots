@@ -6,7 +6,6 @@
 
         public string Name { get; set; } = default!;
 
-        // TODO: try to remove these relations (because they are unneeded)
         public virtual ICollection<CurrencyPair> CurrenciesFrom { get; set; }
             = new HashSet<CurrencyPair>();
 

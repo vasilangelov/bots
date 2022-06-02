@@ -12,7 +12,6 @@
     public class CurrencyGeneratorService : ICurrencyRateProviderService, ICurrencyRateGeneratorService
     {
         private static readonly Random rnd = new();
-        // TODO: memoryCache???
         private static readonly ConcurrentDictionary<(string, string), decimal> currencyRates = new();
 
         private readonly ICurrencyPairService currencyPairService;

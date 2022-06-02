@@ -8,26 +8,28 @@
 
     public class UpdateUserPresetInputModel : IMapFrom<UserPreset>, IMapTo<UserPreset>
     {
-        [Required]
+        [Required(ErrorMessage = "Required")]
         public Guid Id { get; set; } = default!;
 
         [BindNever]
         public bool IsActive { get; set; }
 
-        [Required]
-        [StringLength(20, MinimumLength = 5)]
+        [Required(ErrorMessage = "Required")]
+        [StringLength(20, MinimumLength = 5, ErrorMessage = "StringLength_MinMax")]
+        [Display(Name = "Name")]
         public string Name { get; set; } = default!;
 
-        [Required]
+        [Required(ErrorMessage = "Required")]
         [Display(Name = "Currency Pair")]
         public int CurrencyPairId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Required")]
         [Display(Name = "Chart Type")]
         public ChartType ChartType { get; set; }
 
-        [Required]
-        [Range(0.5, double.MaxValue, ErrorMessage = "The field {0} must be greater than {1}")]
+        [Required(ErrorMessage = "Required")]
+        [Display(Name = "Payout")]
+        [Range(0.5, double.MaxValue, ErrorMessage = "Range")]
         public decimal Payout { get; set; }
     }
 }
