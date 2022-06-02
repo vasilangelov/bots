@@ -10,6 +10,8 @@
         {
             { "InitialBalance", "10000" },
             { "DefaultUserPreset", @"{ ""CurrencyPairId"": 0, ""ChartType"": 0, ""Payout"": 10 }" },
+            { "MaximumPayout", "1000" },
+            { "MinimumPayout", "1" },
         };
 
         public async Task SeedAsync(ApplicationDbContext dbContext)

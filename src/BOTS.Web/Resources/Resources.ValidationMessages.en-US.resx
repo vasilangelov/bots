@@ -129,11 +129,23 @@
   <data name="FileExtensions" xml:space="preserve">
     <value>The field {0} accepts only files with the following extensions: {1}</value>
   </data>
+  <data name="InvalidBettingOption" xml:space="preserve">
+    <value>Betting option is invalid.</value>
+  </data>
+  <data name="InvalidCurrencyPair" xml:space="preserve">
+    <value>Currency pair is invalid.</value>
+  </data>
+  <data name="InvalidUser" xml:space="preserve">
+    <value>User is invalid. Please refresh the page or relog.</value>
+  </data>
   <data name="MaxLengthAttribute" xml:space="preserve">
     <value>The field {0} must be a text with maximum length of '{1}'.</value>
   </data>
   <data name="MinLengthAttribute" xml:space="preserve">
     <value>The field {0} must be a text with length of at least '{1}'.</value>
+  </data>
+  <data name="PayoutRange" xml:space="preserve">
+    <value>Payout must be in the range {0} and {1}.</value>
   </data>
   <data name="PhoneAttribute" xml:space="preserve">
     <value>The field {0} is invalid phone number.</value>

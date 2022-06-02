@@ -159,7 +159,7 @@ namespace BOTS.Web.Areas.Identity.Pages.Account
 
                     var userId = await _userManager.GetUserIdAsync(user);
 
-                    var initialBalance = await this._applicationSettingService.GetValue<decimal>("InitialBalance");
+                    var initialBalance = await this._applicationSettingService.GetValueAsync<decimal>("InitialBalance");
                     await _balanceService.DepositAsync(Guid.Parse(userId), initialBalance);
 
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);

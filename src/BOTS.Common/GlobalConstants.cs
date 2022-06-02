@@ -10,6 +10,8 @@
 
         public const int TradingWindowUpdateFrequency = 3 * 1000;
 
+        public const int DisplayPastMinutesBetValues = 5;
+
         public const byte BarrierDigitPrecision = 18;
 
         public const byte DecimalPlacePrecision = 6;

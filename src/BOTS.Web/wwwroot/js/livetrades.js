@@ -226,6 +226,8 @@ connection.on('UpdateBalance', (balance) => {
     balanceContainer.textContent = balance.toFixed(2);
 });
 
+connection.on('DisplayError', bootstrapAlert);
+
 connection.start()
     .then(addCurrencySubscription)
     .then(requestBettingOptionsForCurrencyPair)

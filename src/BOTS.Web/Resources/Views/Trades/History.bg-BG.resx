@@ -142,7 +142,7 @@
     <value>по-нисък</value>
   </data>
   <data name="Payout" xml:space="preserve">
-    <value>Изплащане</value>
+    <value>Награда</value>
   </data>
   <data name="prediction" xml:space="preserve">
     <value>{0} е {1} от {2}</value>

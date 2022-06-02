@@ -147,7 +147,7 @@
 
             if (userPreset is null)
             {
-                userPreset = await this.applicationSettingService.GetValue<UserPreset>("DefaultUserPreset");
+                userPreset = await this.applicationSettingService.GetValueAsync<UserPreset>("DefaultUserPreset");
             }
 
             return this.mapper.Map<T>(userPreset);

@@ -16,7 +16,7 @@
             this.applicationSettingRepository = applicationSettingRepository;
         }
 
-        public async Task<T> GetValue<T>(string key)
+        public async Task<T> GetValueAsync<T>(string key)
         {
             string value = await this.applicationSettingRepository
                                         .AllAsNoTracking()

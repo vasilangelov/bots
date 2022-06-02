@@ -81,7 +81,6 @@
                                                          bettingOption.FullTime,
                                                          betType);
 
-                // TODO IDEA: may have minimal pay... (e.g. 5% of payout...)
                 if (0 >= entryPercentage || entryPercentage >= 1)
                 {
                     throw new InvalidOperationException("Entry percentage must be a number between 0 and 1");

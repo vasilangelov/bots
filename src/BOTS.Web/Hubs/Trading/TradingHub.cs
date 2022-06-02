@@ -4,14 +4,17 @@
 
     using BOTS.Common;
     using BOTS.Data.Models;
+    using BOTS.Services.ApplicationSettings;
     using BOTS.Services.Currencies.CurrencyRates;
     using BOTS.Services.CurrencyRateStats;
     using BOTS.Services.Trades.Bets;
     using BOTS.Web.Extensions;
     using BOTS.Web.Models.ViewModels;
+    using BOTS.Web.Resources;
 
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.SignalR;
+    using Microsoft.Extensions.Localization;
 
     using static BOTS.Services.Trades.Bets.BarrierActions;
 
@@ -35,7 +38,9 @@
 
             if (!isCurrencyPairActive)
             {
-                // TODO: display error message...
+                var stringLocalizer = (scope.ServiceProvider.GetRequiredService(typeof(IStringLocalizer<ValidationMessages>)) as IStringLocalizer<ValidationMessages>)!;
+
+                await this.Clients.Caller.SendAsync("DisplayError", stringLocalizer["InvalidCurrencyPair"].Value);
                 return;
             }
 
@@ -51,8 +56,7 @@
 
             var currencyRateStats = await currencyRateStatService.GetStatsAsync<CurrencyRateHistoryViewModel>(
                     currencyPairId,
-                    // TODO: remove hardcoded temp values...
-                    DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(10)),
+                    DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(GlobalConstants.DisplayPastMinutesBetValues)),
                     TimeSpan.FromMilliseconds(GlobalConstants.CurrencyRateStatUpdateFrequency));
 
             await this.Clients.Caller.SendAsync("SetCurrencyRateHistory", currencyRateStats);
@@ -76,7 +80,9 @@
 
             if (!isBettingOptionActive)
             {
-                // TODO: display error message...
+                var stringLocalizer = (scope.ServiceProvider.GetRequiredService(typeof(IStringLocalizer<ValidationMessages>)) as IStringLocalizer<ValidationMessages>)!;
+
+                await this.Clients.Caller.SendAsync("DisplayError", stringLocalizer["InvalidBettingOption"].Value);
                 return;
             }
 
@@ -96,7 +102,6 @@
         }
 
         public async Task PlaceBet(
-            // TODO: input model...
             Guid bettingOptionId,
             BetType betType,
             decimal barrier,
@@ -104,13 +109,28 @@
         {
             var userId = this.Context.User?.GetUserId();
 
+            using var scope = this.serviceProvider.CreateScope();
+
             if (!userId.HasValue)
             {
-                // TODO: display error message...
+                var stringLocalizer = (scope.ServiceProvider.GetRequiredService(typeof(IStringLocalizer<ValidationMessages>)) as IStringLocalizer<ValidationMessages>)!;
+
+                await this.Clients.Caller.SendAsync("DisplayError", stringLocalizer["InvalidUser"].Value);
                 return;
             }
 
-            using var scope = this.serviceProvider.CreateScope();
+            var applicationSettingService = scope.ServiceProvider.GetRequiredService<IApplicationSettingService>();
+
+            var maximumPayout = await applicationSettingService.GetValueAsync<decimal>("MaximumPayout");
+            var minimumPayout = await applicationSettingService.GetValueAsync<decimal>("MinimumPayout");
+
+            if (minimumPayout > payout || payout > maximumPayout)
+            {
+                var stringLocalizer = (scope.ServiceProvider.GetRequiredService(typeof(IStringLocalizer<ValidationMessages>)) as IStringLocalizer<ValidationMessages>)!;
+
+                await this.Clients.Caller.SendAsync("DisplayError", stringLocalizer["PayoutRange", minimumPayout, maximumPayout].Value);
+                return;
+            }
 
             var betService = scope.ServiceProvider.GetRequiredService<IBetService>();
 
@@ -127,13 +147,15 @@
         {
             var userId = this.Context.User?.GetUserId();
 
+            using var scope = this.serviceProvider.CreateScope();
+
             if (!userId.HasValue)
             {
-                // TODO: display error message
+                var stringLocalizer = (scope.ServiceProvider.GetRequiredService(typeof(IStringLocalizer<ValidationMessages>)) as IStringLocalizer<ValidationMessages>)!;
+
+                await this.Clients.Caller.SendAsync("DisplayError", stringLocalizer["InvalidUser"].Value);
                 return;
             }
-
-            using var scope = this.serviceProvider.CreateScope();
 
             var betService = scope.ServiceProvider.GetRequiredService<IBetService>();
 
@@ -167,7 +189,9 @@
 
             if (!isBettingOptionActive)
             {
-                // TODO: display error message
+                var stringLocalizer = (scope.ServiceProvider.GetRequiredService(typeof(IStringLocalizer<ValidationMessages>)) as IStringLocalizer<ValidationMessages>)!;
+
+                await this.Clients.Caller.SendAsync("DisplayError", stringLocalizer["InvalidBettingOption"].Value);
                 return;
             }
 

@@ -10,7 +10,6 @@
 
         Task<int> GetUserHistoryPageCount(Guid userId, int itemsPerPage);
 
-        // TODO: use input model???
         Task<T> PlaceBetAsync<T>(
             Guid userId,
             Guid bettingOptionId,

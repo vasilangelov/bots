@@ -35,12 +35,16 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3">
-            @if (this.TempData["Error"] != null)
-            {
-                <div class="alert alert-danger" role="alert">
-                    @this.TempData["Error"]
-                </div>
-            }
+            <div id="alertContainer">
+                @if (this.TempData["Error"] != null)
+                {
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        @this.TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+            </div>
+
             @RenderBody()
         </main>
     </div>
@@ -54,6 +58,7 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/dateTimeLocalizer.js" asp-append-version="true"></script>
+    <script src="~/js/alert.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

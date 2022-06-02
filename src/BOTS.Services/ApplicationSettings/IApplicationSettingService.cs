@@ -2,6 +2,6 @@
 {
     public interface IApplicationSettingService
     {
-        Task<T> GetValue<T>(string key);
+        Task<T> GetValueAsync<T>(string key);
     }
 }

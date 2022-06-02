@@ -141,6 +141,15 @@
   <data name="FileExtensions" xml:space="preserve">
     <value>Полето {0} приема само файлове със следните разширения: {1}</value>
   </data>
+  <data name="InvalidBettingOption" xml:space="preserve">
+    <value>Невалидна опция за залог.</value>
+  </data>
+  <data name="InvalidCurrencyPair" xml:space="preserve">
+    <value>Невалидна валутна двойка.</value>
+  </data>
+  <data name="InvalidUser" xml:space="preserve">
+    <value>Невалиден потребител. Моля обновете страницата или влезте наново.</value>
+  </data>
   <data name="MaxLengthAttribute" xml:space="preserve">
     <value>Полето {0} трябва да е текст с максимална дължина '{1}'.</value>
   </data>
@@ -157,7 +166,10 @@
     <value>Парола</value>
   </data>
   <data name="Payout" xml:space="preserve">
-    <value>Заплащане</value>
+    <value>Награда</value>
+  </data>
+  <data name="PayoutRange" xml:space="preserve">
+    <value>Наградата трябва да е в интервала между {0} и {1}.</value>
   </data>
   <data name="PhoneAttribute" xml:space="preserve">
     <value>Полето {0} е невалиден телефонен номер.</value>
