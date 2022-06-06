@@ -63,10 +63,22 @@
             => this.dbSet.Remove(item);
 
         public async Task<int> SaveChangesAsync()
-            => await this.dbContext.SaveChangesAsync();
+        {
+            var rowsAffected = await this.dbContext.SaveChangesAsync();
+
+            this.dbContext.ChangeTracker.Clear();
+
+            return rowsAffected;
+        }
 
         public int SaveChanges()
-            => this.dbContext.SaveChanges();
+        {
+            var rowsAffected = this.dbContext.SaveChanges();
+
+            this.dbContext.ChangeTracker.Clear();
+
+            return rowsAffected;
+        }
 
         public void Dispose()
         {

@@ -63,6 +63,7 @@
             => await this.betRepository
                             .AllAsNoTracking()
                             .Where(x => x.UserId == userId && x.BettingOption.TradingWindow.IsClosed)
+                            .OrderByDescending(x => x.BettingOption.TradingWindow.End)
                             .Skip(skip)
                             .Take(take)
                             .ProjectTo<T>(this.mapper.ConfigurationProvider)

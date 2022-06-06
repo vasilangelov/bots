@@ -63,6 +63,10 @@ const parseCookie =
         }, {});
 
 function getCulture() {
+    if (!document.cookie) {
+        return undefined;
+    }
+
     const cultureCookie = parseCookie(document.cookie)['.AspNetCore.Culture'];
 
     if (cultureCookie === undefined) {
