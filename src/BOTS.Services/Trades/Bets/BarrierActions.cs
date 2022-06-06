@@ -25,7 +25,7 @@
             return barrierPercentageFormula(currencyRate, barrier, delta, remainingTime, fullTime);
         }
 
-        internal static decimal[] GenerateBarriers(
+        public static decimal[] GenerateBarriers(
             byte barrierCount,
             decimal openingPrice,
             decimal barrierStep)

@@ -29,7 +29,7 @@
         {
             using (var scope = this.serviceProvider.CreateScope())
             {
-                var tradingWindowService = scope.ServiceProvider.GetRequiredService<ITradingWindowManagerService>();
+                var tradingWindowService = scope.ServiceProvider.GetRequiredService<ITradingWindowService>();
 
                 await tradingWindowService.UpdateEndedTradingWindowsAsync();
             }
@@ -45,7 +45,7 @@
                 {
                     var now = DateTime.UtcNow;
 
-                    var tradingWindowService = scope.ServiceProvider.GetRequiredService<ITradingWindowManagerService>();
+                    var tradingWindowService = scope.ServiceProvider.GetRequiredService<ITradingWindowService>();
 
                     await tradingWindowService.EnsureAllTradingWindowsActiveAsync();
 

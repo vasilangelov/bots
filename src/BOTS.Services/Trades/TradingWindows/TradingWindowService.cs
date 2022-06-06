@@ -13,7 +13,7 @@
     using Microsoft.Extensions.Caching.Memory;
 
     [TransientService]
-    public class TradingWindowManagerService : ITradingWindowManagerService
+    public class TradingWindowService : ITradingWindowService
     {
         private static readonly object tradingWindowsKey = new();
         private static readonly object bettingOptionPresetsKey = new();
@@ -26,7 +26,7 @@
         private readonly IEventManager<TradingWindowClosedEvent> tradingWindowEventManager;
         private readonly IMemoryCache memoryCache;
 
-        public TradingWindowManagerService(
+        public TradingWindowService(
             IRepository<TradingWindow> tradingWindowRepository,
             IRepository<BettingOptionPreset> bettingOptionPresetRepository,
             IBettingOptionService bettingOptionService,
@@ -107,6 +107,8 @@
                 await this.bettingOptionService.SetBettingOptionsClosingValueAsync(
                     tradingWindow.Id,
                     tradingWindow.End);
+
+                await this.CloseTradingWindowAsync(tradingWindow.Id, tradingWindow.End);
             }
         }
 

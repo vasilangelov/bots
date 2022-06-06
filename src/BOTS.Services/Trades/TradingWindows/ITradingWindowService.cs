@@ -1,6 +1,6 @@
 ﻿namespace BOTS.Services.Trades.TradingWindows
 {
-    public interface ITradingWindowManagerService
+    public interface ITradingWindowService
     {
         Task UpdateEndedTradingWindowsAsync();
 

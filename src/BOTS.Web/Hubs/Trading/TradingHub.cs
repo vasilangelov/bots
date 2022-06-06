@@ -134,11 +134,13 @@
 
             var betService = scope.ServiceProvider.GetRequiredService<IBetService>();
 
-            var betViewModel = await betService.PlaceBetAsync<BetViewModel>(userId.Value,
-                                                                            bettingOptionId,
-                                                                            betType,
-                                                                            barrier,
-                                                                            payout);
+            var betId = await betService.PlaceBetAsync(userId.Value,
+                                                       bettingOptionId,
+                                                       betType,
+                                                       barrier,
+                                                       payout);
+
+            var betViewModel = await betService.GetBetAsync<BetViewModel>(betId);
 
             await this.Clients.Caller.SendAsync("DisplayBet", betViewModel);
         }
