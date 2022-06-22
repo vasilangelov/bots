@@ -34,7 +34,7 @@
         }
 
         [Fact]
-        public async Task ShouldThrowWhenInvalidBarrier()
+        public async Task ShouldReturnErrorWhenInvalidBarrier()
         {
             await this.SeedApplicationSettingsAsync();
             var userId = await this.SeedUserAsync(10000);
@@ -50,7 +50,7 @@
         }
 
         [Fact]
-        public async Task ShouldThrowWhenNoUserBalance()
+        public async Task ShouldReturnErrorWhenNoUserBalance()
         {
             await this.SeedApplicationSettingsAsync();
             var userId = await this.SeedUserAsync(0);
@@ -66,7 +66,7 @@
         }
 
         [Fact]
-        public async Task ShouldThrowWhenNoSystemBalance()
+        public async Task ShouldReturnErrorWhenNoSystemBalance()
         {
             await this.SeedApplicationSettingsAsync();
             var userId = await this.SeedUserAsync(10000);
@@ -82,7 +82,7 @@
         }
 
         [Fact]
-        public async Task ShouldThrowWhenBetForCurrencyPairExists()
+        public async Task ShouldReturnErrorWhenBetForCurrencyPairExists()
         {
             await this.SeedApplicationSettingsAsync();
             var userId = await this.SeedUserAsync(10000);

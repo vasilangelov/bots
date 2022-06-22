@@ -120,4 +120,7 @@
   <data name="Home" xml:space="preserve">
     <value>Начална страница</value>
   </data>
+  <data name="Welcome" xml:space="preserve">
+    <value>Добре дошли в услугата за бинарни опции!</value>
+  </data>
 </root>

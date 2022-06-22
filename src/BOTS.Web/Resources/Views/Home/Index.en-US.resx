@@ -117,49 +117,7 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Active bets" xml:space="preserve">
-    <value>Активни залози</value>
-  </data>
-  <data name="Barrier" xml:space="preserve">
-    <value>Бариера</value>
-  </data>
-  <data name="Bet Id" xml:space="preserve">
-    <value>Идентификатор на залога</value>
-  </data>
-  <data name="Chart type" xml:space="preserve">
-    <value>Тип на диаграмата</value>
-  </data>
-  <data name="Currency pair" xml:space="preserve">
-    <value>Валутна двойка</value>
-  </data>
-  <data name="Currency rate" xml:space="preserve">
-    <value>Валутен курс</value>
-  </data>
-  <data name="Entry fee" xml:space="preserve">
-    <value>Входна такса</value>
-  </data>
-  <data name="Higher" xml:space="preserve">
-    <value>По-високо</value>
-  </data>
-  <data name="Live Trades" xml:space="preserve">
-    <value>Търговия на живо</value>
-  </data>
-  <data name="Live Trading" xml:space="preserve">
-    <value>Търговия на живо</value>
-  </data>
-  <data name="Lower" xml:space="preserve">
-    <value>По-ниско</value>
-  </data>
-  <data name="Payout" xml:space="preserve">
-    <value>Награда</value>
-  </data>
-  <data name="Prediction" xml:space="preserve">
-    <value>Предположение</value>
-  </data>
-  <data name="Remaining time" xml:space="preserve">
-    <value>Оставащо време</value>
-  </data>
-  <data name="Trading window" xml:space="preserve">
-    <value>Прозорец за търговия</value>
+  <data name="Welcome" xml:space="preserve">
+    <value>Welcome to Binary Options Trading Service!</value>
   </data>
 </root>
