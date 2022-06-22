@@ -117,8 +117,17 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ActiveUserBet" xml:space="preserve">
+    <value>Потребителят има активен залог на тази валутна двойка.</value>
+  </data>
+  <data name="CannotPayoutReward" xml:space="preserve">
+    <value>Не можем да изплатим потенциалната награда.</value>
+  </data>
   <data name="Chart Type" xml:space="preserve">
     <value>Тип на диаграмата</value>
+  </data>
+  <data name="ClosedTradingWindow" xml:space="preserve">
+    <value>Прозорецът за търговия е затворен.</value>
   </data>
   <data name="Compare_Match" xml:space="preserve">
     <value>'{0}' и '{1}' не съвпадат.</value>
@@ -138,8 +147,14 @@
   <data name="EmailAddress" xml:space="preserve">
     <value>Полето {0} е невалиден имейл адрес.</value>
   </data>
+  <data name="EntryPercentageRange" xml:space="preserve">
+    <value>Входният процент трябва да е число между {0} и {1}.</value>
+  </data>
   <data name="FileExtensions" xml:space="preserve">
     <value>Полето {0} приема само файлове със следните разширения: {1}</value>
+  </data>
+  <data name="InsufficientBalance" xml:space="preserve">
+    <value>Нямате достатъчно средства.</value>
   </data>
   <data name="InvalidBettingOption" xml:space="preserve">
     <value>Невалидна опция за залог.</value>

@@ -8,9 +8,10 @@
     using BOTS.Data.Infrastructure.Repositories;
     using BOTS.Data.Infrastructure.Transactions;
     using BOTS.Data.Models;
+    using BOTS.Services.ApplicationSettings;
     using BOTS.Services.Balance;
     using BOTS.Services.Balance.System;
-    using BOTS.Services.Common;
+    using BOTS.Services.Common.Results;
     using BOTS.Services.Currencies.CurrencyRates;
 
     using static BOTS.Services.Trades.Bets.BarrierActions;
@@ -23,6 +24,7 @@
         private readonly ICurrencyRateProviderService currencyRateProviderService;
         private readonly IBalanceService balanceService;
         private readonly ITreasuryService treasuryService;
+        private readonly IApplicationSettingService applicationSettingService;
         private readonly ITransactionManager transactionManager;
         private readonly IMapper mapper;
 
@@ -32,6 +34,7 @@
             ICurrencyRateProviderService currencyRateProviderService,
             IBalanceService balanceService,
             ITreasuryService treasuryService,
+            IApplicationSettingService applicationSettingService,
             ITransactionManager transactionManager,
             IMapper mapper)
         {
@@ -40,6 +43,7 @@
             this.currencyRateProviderService = currencyRateProviderService;
             this.balanceService = balanceService;
             this.treasuryService = treasuryService;
+            this.applicationSettingService = applicationSettingService;
             this.transactionManager = transactionManager;
             this.mapper = mapper;
         }
@@ -79,8 +83,8 @@
             return (int)Math.Ceiling(endedBetsCount / (double)itemsPerPage);
         }
 
-        public async Task<Guid> PlaceBetAsync(
-            Guid userId,
+        public async Task<Result<Guid>> PlaceBetAsync(
+            Guid? userId,
             Guid bettingOptionId,
             BetType betType,
             decimal barrier,
@@ -90,15 +94,28 @@
 
             try
             {
+                if (!userId.HasValue)
+                {
+                    return Result.Error("InvalidUser");
+                }
+
+                var maximumPayout = await applicationSettingService.GetValueAsync<decimal>("MaximumPayout");
+                var minimumPayout = await applicationSettingService.GetValueAsync<decimal>("MinimumPayout");
+
+                if (minimumPayout > payout || payout > maximumPayout)
+                {
+                    return Result.Error("PayoutRange", minimumPayout, maximumPayout);
+                }
+
                 var bettingOption = await this.GetBettingOptionAsync(bettingOptionId);
 
                 if (!bettingOption.Barriers.Contains(barrier))
                 {
-                    throw new ArgumentException("Invalid barrier value", nameof(barrier));
+                    return Result.Error("Invalid barrier value");
                 }
 
-                var currencyRate =
-                    await this.currencyRateProviderService.GetCurrencyRateAsync(bettingOption.CurrencyPairId);
+                var currencyRate = await this.currencyRateProviderService
+                    .GetCurrencyRateAsync(bettingOption.CurrencyPairId);
 
                 var entryPercentage = GetEntryPercentage(bettingOption.Barriers,
                                                          barrier,
@@ -110,45 +127,46 @@
 
                 if (0 >= entryPercentage || entryPercentage >= 1)
                 {
-                    throw new InvalidOperationException("Entry percentage must be a number between 0 and 1");
+                    return Result.Error("EntryPercentageRange", 0, 1);
                 }
 
                 var entryFee = payout * entryPercentage;
 
                 bool hasActiveCurrencyPairBet =
-                    await this.HasActiveUserCurrencyPairBet(userId, bettingOption.CurrencyPairId);
+                    await this.HasActiveUserCurrencyPairBet(userId.Value, bettingOption.CurrencyPairId);
 
                 if (hasActiveCurrencyPairBet)
                 {
-                    throw new InvalidOperationException("User has active bet on this currency pair");
+                    return Result.Error("ActiveUserBet");
                 }
 
                 bool isTradingWindowActive = bettingOption.TimeRemaining > 0;
 
                 if (!isTradingWindowActive)
                 {
-                    throw new InvalidOperationException("Trading window is closed");
+                    return Result.Error("ClosedTradingWindow");
                 }
 
-                bool hasEnoughBalance = await this.balanceService.HasEnoughBalanceAsync(userId, entryFee);
+                bool hasEnoughBalance = await this.balanceService.HasEnoughBalanceAsync(userId.Value, entryFee);
 
                 if (!hasEnoughBalance)
                 {
-                    throw new InvalidOperationException("User does not have enough balance");
+                    return Result.Error("InsufficientBalance");
                 }
 
                 bool canPayout = await this.treasuryService.CanPlaceBetAsync(entryFee, payout);
 
                 if (!canPayout)
                 {
-                    throw new InvalidOperationException("Cannot payout potential reward");
+                    return Result.Error("CannotPayoutReward");
                 }
 
                 await this.treasuryService.AddSystemBalanceAsync(entryFee);
                 await this.treasuryService.AddUserProfitsAsync(payout - entryFee);
-                await this.balanceService.SubtractFromBalanceAsync(userId, entryFee);
+                await this.balanceService.SubtractFromBalanceAsync(userId.Value,
+                                                                   entryFee);
 
-                var betId = await this.AddBetAsync(userId,
+                var betId = await this.AddBetAsync(userId.Value,
                                                    bettingOptionId,
                                                    betType,
                                                    barrier,
@@ -178,9 +196,9 @@
                 .Where(x => x.BettingOption.TradingWindow.IsClosed &&
                             x.BettingOption.TradingWindowId == tradingWindowId &&
                             ((x.Type == BetType.Higher &&
-                                x.BarrierPrediction < x.BettingOption.CloseValue) ||
+                                x.BettingOption.CloseValue > x.BarrierPrediction) ||
                             (x.Type == BetType.Lower &&
-                                x.BarrierPrediction > x.BettingOption.CloseValue)))
+                                x.BettingOption.CloseValue < x.BarrierPrediction)))
                 .Select(x => new { x.Payout, x.UserId })
                 .ToArrayAsync();
 

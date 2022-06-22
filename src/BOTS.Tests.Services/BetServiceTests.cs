@@ -6,6 +6,7 @@
 
     using BOTS.Data;
     using BOTS.Data.Models;
+    using BOTS.Services.Common.Results;
     using BOTS.Services.Currencies.CurrencyRates;
     using BOTS.Services.Trades.Bets;
 
@@ -19,6 +20,7 @@
         [Fact]
         public async Task ShouldPlaceBetSuccessfuly()
         {
+            await this.SeedApplicationSettingsAsync();
             var userId = await this.SeedUserAsync(10000);
             await this.SeedTreasuryAsync(20000, 10000);
             var barriers = await this.GenerateBarriersAsync();
@@ -26,15 +28,15 @@
 
             var betService = this.serviceProvider.GetRequiredService<IBetService>();
 
-            var exception = await Record.ExceptionAsync(async () =>
-                await betService.PlaceBetAsync(userId, bettingOptionId, BetType.Higher, barriers[2], 10));
+            var result = await betService.PlaceBetAsync(userId, bettingOptionId, BetType.Higher, barriers[2], 10);
 
-            Assert.Null(exception);
+            Assert.IsType<SuccessResult<Guid>>(result);
         }
 
         [Fact]
         public async Task ShouldThrowWhenInvalidBarrier()
         {
+            await this.SeedApplicationSettingsAsync();
             var userId = await this.SeedUserAsync(10000);
             await this.SeedTreasuryAsync(20000, 10000);
             var barriers = await this.GenerateBarriersAsync();
@@ -42,13 +44,15 @@
 
             var betService = this.serviceProvider.GetRequiredService<IBetService>();
 
-            await Assert.ThrowsAsync<ArgumentException>(async () =>
-                await betService.PlaceBetAsync(userId, bettingOptionId, BetType.Higher, -1, 10));
+            var result = await betService.PlaceBetAsync(userId, bettingOptionId, BetType.Higher, -1, 10);
+
+            Assert.IsType<ErrorResult<Guid>>(result);
         }
 
         [Fact]
         public async Task ShouldThrowWhenNoUserBalance()
         {
+            await this.SeedApplicationSettingsAsync();
             var userId = await this.SeedUserAsync(0);
             await this.SeedTreasuryAsync(20000, 0);
             var barriers = await this.GenerateBarriersAsync();
@@ -56,13 +60,15 @@
 
             var betService = this.serviceProvider.GetRequiredService<IBetService>();
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                await betService.PlaceBetAsync(userId, bettingOptionId, BetType.Higher, barriers[2], 10));
+            var result = await betService.PlaceBetAsync(userId, bettingOptionId, BetType.Higher, barriers[2], 10);
+
+            Assert.IsType<ErrorResult<Guid>>(result);
         }
 
         [Fact]
         public async Task ShouldThrowWhenNoSystemBalance()
         {
+            await this.SeedApplicationSettingsAsync();
             var userId = await this.SeedUserAsync(10000);
             await this.SeedTreasuryAsync(10000, 10000);
             var barriers = await this.GenerateBarriersAsync();
@@ -70,13 +76,15 @@
 
             var betService = this.serviceProvider.GetRequiredService<IBetService>();
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                await betService.PlaceBetAsync(userId, bettingOptionId, BetType.Higher, barriers[2], 10));
+            var result = await betService.PlaceBetAsync(userId, bettingOptionId, BetType.Higher, barriers[2], 10);
+
+            Assert.IsType<ErrorResult<Guid>>(result);
         }
 
         [Fact]
         public async Task ShouldThrowWhenBetForCurrencyPairExists()
         {
+            await this.SeedApplicationSettingsAsync();
             var userId = await this.SeedUserAsync(10000);
             await this.SeedTreasuryAsync(20000, 10000);
             var barriers = await this.GenerateBarriersAsync();
@@ -88,8 +96,9 @@
 
             await betService.PlaceBetAsync(userId, bettingOption1Id, BetType.Higher, barriers[2], 10);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-                await betService.PlaceBetAsync(userId, bettingOption2Id, BetType.Higher, barriers[2], 10));
+            var result = await betService.PlaceBetAsync(userId, bettingOption2Id, BetType.Higher, barriers[2], 10);
+
+            Assert.IsType<ErrorResult<Guid>>(result);
         }
 
         [Fact]
@@ -268,6 +277,21 @@
             };
 
             dbContext.Add(treasury);
+
+            await dbContext.SaveChangesAsync();
+        }
+
+        private async Task SeedApplicationSettingsAsync()
+        {
+            var dbContext = this.serviceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var settings = new ApplicationSetting[]
+            {
+                new() { Key = "MaximumPayout", Value = "1000" },
+                new() { Key = "MinimumPayout", Value ="1" },
+            };
+
+            dbContext.AddRange(settings);
 
             await dbContext.SaveChangesAsync();
         }

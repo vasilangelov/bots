@@ -117,6 +117,15 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ActiveUserBet" xml:space="preserve">
+    <value>User has active bet on this currency pair.</value>
+  </data>
+  <data name="CannotPayoutReward" xml:space="preserve">
+    <value>Cannot payout potential reward.</value>
+  </data>
+  <data name="ClosedTradingWindow" xml:space="preserve">
+    <value>Trading window is closed.</value>
+  </data>
   <data name="Compare_Match" xml:space="preserve">
     <value>Fields '{0}' and '{1}' do not match.</value>
   </data>
@@ -126,8 +135,14 @@
   <data name="EmailAddress" xml:space="preserve">
     <value>The field {0} is invalid email address.</value>
   </data>
+  <data name="EntryPercentageRange" xml:space="preserve">
+    <value>Entry percentage must be a number between {0} and {1}.</value>
+  </data>
   <data name="FileExtensions" xml:space="preserve">
     <value>The field {0} accepts only files with the following extensions: {1}</value>
+  </data>
+  <data name="InsufficientBalance" xml:space="preserve">
+    <value>User does not have enough balance.</value>
   </data>
   <data name="InvalidBettingOption" xml:space="preserve">
     <value>Betting option is invalid.</value>

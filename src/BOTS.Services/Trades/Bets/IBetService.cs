@@ -1,4 +1,6 @@
-﻿namespace BOTS.Services.Trades.Bets
+﻿using BOTS.Services.Common.Results;
+
+namespace BOTS.Services.Trades.Bets
 {
     public interface IBetService
     {
@@ -12,8 +14,8 @@
 
         Task<int> GetUserHistoryPageCount(Guid userId, int itemsPerPage);
 
-        Task<Guid> PlaceBetAsync(
-            Guid userId,
+        Task<Result<Guid>> PlaceBetAsync(
+            Guid? userId,
             Guid bettingOptionId,
             BetType betType,
             decimal barrier,

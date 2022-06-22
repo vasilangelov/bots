@@ -4,7 +4,7 @@
 
     using BOTS.Common;
     using BOTS.Data.Models;
-    using BOTS.Services.ApplicationSettings;
+    using BOTS.Services.Common.Results;
     using BOTS.Services.Currencies.CurrencyRates;
     using BOTS.Services.CurrencyRateStats;
     using BOTS.Services.Trades.Bets;
@@ -111,38 +111,32 @@
 
             using var scope = this.serviceProvider.CreateScope();
 
-            if (!userId.HasValue)
-            {
-                var stringLocalizer = (scope.ServiceProvider.GetRequiredService(typeof(IStringLocalizer<ValidationMessages>)) as IStringLocalizer<ValidationMessages>)!;
-
-                await this.Clients.Caller.SendAsync("DisplayError", stringLocalizer["InvalidUser"].Value);
-                return;
-            }
-
-            var applicationSettingService = scope.ServiceProvider.GetRequiredService<IApplicationSettingService>();
-
-            var maximumPayout = await applicationSettingService.GetValueAsync<decimal>("MaximumPayout");
-            var minimumPayout = await applicationSettingService.GetValueAsync<decimal>("MinimumPayout");
-
-            if (minimumPayout > payout || payout > maximumPayout)
-            {
-                var stringLocalizer = (scope.ServiceProvider.GetRequiredService(typeof(IStringLocalizer<ValidationMessages>)) as IStringLocalizer<ValidationMessages>)!;
-
-                await this.Clients.Caller.SendAsync("DisplayError", stringLocalizer["PayoutRange", minimumPayout, maximumPayout].Value);
-                return;
-            }
-
             var betService = scope.ServiceProvider.GetRequiredService<IBetService>();
 
-            var betId = await betService.PlaceBetAsync(userId.Value,
+            var result = await betService.PlaceBetAsync(userId,
                                                        bettingOptionId,
                                                        betType,
                                                        barrier,
                                                        payout);
 
-            var betViewModel = await betService.GetBetAsync<BetViewModel>(betId);
+            if (result is ErrorResult<Guid> errorResult)
+            {
+                var stringLocalizer = scope
+                    .ServiceProvider
+                    .GetRequiredService<IStringLocalizer<ValidationMessages>>();
 
-            await this.Clients.Caller.SendAsync("DisplayBet", betViewModel);
+                await this.Clients
+                    .Caller
+                    .SendAsync(
+                        "DisplayError",
+                        stringLocalizer[errorResult.ErrorMessage, errorResult.Parameters].Value);
+            }
+            else if (result is SuccessResult<Guid> successResult)
+            {
+                var betViewModel = await betService.GetBetAsync<BetViewModel>(successResult.Value);
+
+                await this.Clients.Caller.SendAsync("DisplayBet", betViewModel);
+            }
         }
 
         public async Task GetActiveBets()
